@@ -1,103 +1,88 @@
-import Image from "next/image";
+// src/app/page.tsx
+'use client';
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+import { useEffect } from 'react';
+import { useAuth } from "@/context/AuthContext";
+import { auth } from "@/lib/firebase/firebaseConfig";
+import { signOut } from "firebase/auth";
+import { useRouter } from "next/navigation";
+import Link from 'next/link';
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+export default function HomePage() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+
+  // Effect hook to PERFORM the redirect if needed
+  useEffect(() => {
+    if (!isLoading) {
+      if (user && !user.emailVerified) {
+        router.push('/verify-email');
+      }
+      // No need for else here, the rendering logic below handles other cases
+    }
+  }, [user, isLoading, router]);
+
+  const handleSignOut = async () => {
+    // ... (sign out logic remains the same)
+    try {
+      await signOut(auth);
+      console.log("User signed out successfully");
+      router.push('/signin');
+    } catch (error) {
+      console.error("Error signing out:", error);
+      alert("Failed to sign out. Please try again.");
+    }
+  };
+
+  // --- Render Logic ---
+
+  // 1. Handle Loading State FIRST
+  if (isLoading) {
+    return <div className="flex justify-center items-center min-h-screen"><p>Loading...</p></div>;
+  }
+
+  // 2. Handle Unverified User State (Prevent Flash)
+  // If user exists but is not verified, show nothing or minimal message while useEffect redirects
+  if (user && !user.emailVerified) {
+     // You could return null, or a generic loading/redirecting message
+     return <div className="flex justify-center items-center min-h-screen"><p>Checking verification status...</p></div>;
+     // The useEffect will handle the actual redirect shortly
+  }
+
+  // 3. Handle Verified User State
+  if (user && user.emailVerified) {
+    return (
+      <main className="p-6">
+        <h1 className="text-xl font-semibold mb-4">Welcome to PullIn!</h1>
+        <div>
+          <p>Hello, {user.email}!</p>
+          <p>Your User ID is: {user.uid}</p>
+          <p className="text-green-600 font-medium">Email Verified!</p>
+          <button onClick={handleSignOut} className="mt-4 rounded-md bg-red-500 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-400">
+            Sign Out
+          </button>
         </div>
+        <p className="mt-8 text-gray-500">This is the main content area.</p>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+    );
+  }
+
+  // 4. Handle Logged Out State (user is null)
+  return (
+    <main className="p-6">
+      <h1 className="text-xl font-semibold mb-4">Welcome to PullIn!</h1>
+      <div>
+        <p>Please sign in or sign up to continue.</p>
+        <div className="mt-4 space-x-4">
+           <Link href="/signin" className="text-indigo-600 hover:text-indigo-800">
+             Sign In
+           </Link>
+           <Link href="/signup" className="text-indigo-600 hover:text-indigo-800">
+             Sign Up
+           </Link>
+        </div>
+      </div>
+      <p className="mt-8 text-gray-500">This is the main content area.</p>
+    </main>
   );
 }
