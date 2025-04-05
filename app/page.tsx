@@ -1,88 +1,42 @@
-// src/app/page.tsx
-'use client';
-
-import { useEffect } from 'react';
-import { useAuth } from "@/context/AuthContext";
-import { auth } from "@/lib/firebase/firebaseConfig";
-import { signOut } from "firebase/auth";
-import { useRouter } from "next/navigation";
 import Link from 'next/link';
-
-export default function HomePage() {
-  const { user, isLoading } = useAuth();
-  const router = useRouter();
-
-  // Effect hook to PERFORM the redirect if needed
-  useEffect(() => {
-    if (!isLoading) {
-      if (user && !user.emailVerified) {
-        router.push('/verify-email');
-      }
-      // No need for else here, the rendering logic below handles other cases
-    }
-  }, [user, isLoading, router]);
-
-  const handleSignOut = async () => {
-    // ... (sign out logic remains the same)
-    try {
-      await signOut(auth);
-      console.log("User signed out successfully");
-      router.push('/signin');
-    } catch (error) {
-      console.error("Error signing out:", error);
-      alert("Failed to sign out. Please try again.");
-    }
-  };
-
-  // --- Render Logic ---
-
-  // 1. Handle Loading State FIRST
-  if (isLoading) {
-    return <div className="flex justify-center items-center min-h-screen"><p>Loading...</p></div>;
-  }
-
-  // 2. Handle Unverified User State (Prevent Flash)
-  // If user exists but is not verified, show nothing or minimal message while useEffect redirects
-  if (user && !user.emailVerified) {
-     // You could return null, or a generic loading/redirecting message
-     return <div className="flex justify-center items-center min-h-screen"><p>Checking verification status...</p></div>;
-     // The useEffect will handle the actual redirect shortly
-  }
-
-  // 3. Handle Verified User State
-  if (user && user.emailVerified) {
+        
+export default function Home() {
     return (
-      <main className="p-6">
-        <h1 className="text-xl font-semibold mb-4">Welcome to PullIn!</h1>
-        <div>
-          <p>Hello, {user.email}!</p>
-          <p>Your User ID is: {user.uid}</p>
-          <p className="text-green-600 font-medium">Email Verified!</p>
-          <button onClick={handleSignOut} className="mt-4 rounded-md bg-red-500 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-400">
-            Sign Out
-          </button>
-        </div>
-        <p className="mt-8 text-gray-500">This is the main content area.</p>
-      </main>
-    );
-  }
+        <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-400 to-blue-500 p-6">
+            <div className="max-w-3xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden">
+                <div className="flex flex-col md:flex-row">
+                    {/* Left Content Area */}
+                    <div className="p-8 md:p-12 flex flex-col justify-center md:w-3/5">
+                        <h1 className="text-5xl font-bold bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent mb-6">
+                            Pull𝕚n
+                        </h1>
+                        <p className="text-xl text-gray-700 mb-8 leading-relaxed">
+                            Effortlessly connect students with housing
+                            registration times to peers looking for suites.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-4">
+                            {/* TODO: Work on sign in and sign up buttons */}
+                            <Link href="/signup" className="px-8 py-3 bg-gradient-to-r from-teal-400 to-teal-500 text-white font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300">
+                                Sign Up
+                            </Link>
+                            <Link href="/signin" className="px-8 py-3 bg-white border-2 border-teal-400 text-teal-500 font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300">
+                                Sign In
+                            </Link>
+                        </div>
+                    </div>
 
-  // 4. Handle Logged Out State (user is null)
-  return (
-    <main className="p-6">
-      <h1 className="text-xl font-semibold mb-4">Welcome to PullIn!</h1>
-      <div>
-        <p>Please sign in or sign up to continue.</p>
-        <div className="mt-4 space-x-4">
-           <Link href="/signin" className="text-indigo-600 hover:text-indigo-800">
-             Sign In
-           </Link>
-           <Link href="/signup" className="text-indigo-600 hover:text-indigo-800">
-             Sign Up
-           </Link>
-        </div>
-      </div>
-      <p className="mt-8 text-gray-500">This is the main content area.</p>
-    </main>
-  );
+                    {/* Right Decorative Area */}
+                    <div className="hidden md:block md:w-2/5 bg-gradient-to-br from-teal-400 to-blue-500 p-12">
+                        <div className="h-full flex items-center justify-center">
+                            <div className="w-32 h-32 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+                                <div className="w-24 h-24 rounded-full bg-white bg-opacity-30 flex items-center justify-center">
+                                    <div className="w-16 h-16 rounded-full bg-white bg-opacity-40"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    );
 }
