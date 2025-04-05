@@ -1,3 +1,5 @@
+import Link from 'next/link';
+        
 export default function Home() {
     return (
         <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-400 to-blue-500 p-6">
@@ -14,12 +16,12 @@ export default function Home() {
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4">
                             {/* TODO: Work on sign in and sign up buttons */}
-                            <button className="px-8 py-3 bg-gradient-to-r from-teal-400 to-teal-500 text-white font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300">
+                            <Link href="/signup" className="px-8 py-3 bg-gradient-to-r from-teal-400 to-teal-500 text-white font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300">
                                 Sign Up
-                            </button>
-                            <button className="px-8 py-3 bg-white border-2 border-teal-400 text-teal-500 font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300">
+                            </Link>
+                            <Link href="/signin" className="px-8 py-3 bg-white border-2 border-teal-400 text-teal-500 font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300">
                                 Sign In
-                            </button>
+                            </Link>
                         </div>
                     </div>
 
