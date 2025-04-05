@@ -4,13 +4,11 @@
 import React, { useState, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, firestore } from '@/lib/firebase/firebaseConfig';
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'; // Keep this import
-import type { ActionCodeSettings } from 'firebase/auth'; // Import the type if needed
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Combobox, Transition } from '@headlessui/react';
 
-// --- School Data ---
-// Note: Using 'name' for both display and value simplifies Combobox usage
+// --- School Data (remains the same) ---
 const activeColleges = [
   { name: "Pomona College", domain: "mymail.pomona.edu" },
   { name: "Scripps College", domain: "scrippscollege.edu" },
@@ -23,31 +21,42 @@ const schoolDomainMap: { [key: string]: string } = activeColleges.reduce((acc, c
   acc[college.name] = college.domain;
   return acc;
 }, {} as { [key: string]: string });
-// --- End School Data ---
+
+const isValidTimeFormat = (time: string): boolean => {
+  const timeRegex = /^\d{1,2}:\d{2}$/;
+  if (!timeRegex.test(time)) {
+    return false;
+  }
+  return true;
+};
+
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedSchool, setSelectedSchool] = useState(''); // Stores the selected school NAME string
-  const [query, setQuery] = useState(''); // State for the Combobox input query
+  const [selectedSchool, setSelectedSchool] = useState('');
+  const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  // Helper function to extract domain (no change)
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [gradYear, setGradYear] = useState(''); 
+  const [registrationTime, setRegistrationTime] = useState('');
+
   const getDomainFromEmail = (email: string): string | null => {
     const parts = email.split('@');
     return parts.length === 2 ? parts[1].toLowerCase() : null;
   };
 
-  // Filter colleges based on the query input
   const filteredColleges =
     query === ''
       ? activeColleges
       : activeColleges.filter((college) =>
           college.name
             .toLowerCase()
-            .replace(/\s+/g, '') // ignore spaces in search
+            .replace(/\s+/g, '')
             .includes(query.toLowerCase().replace(/\s+/g, ''))
         );
 
@@ -55,86 +64,64 @@ export default function SignUpPage() {
     event.preventDefault();
     setError(null);
 
-    // Validation (selectedSchool string is directly from Combobox state)
-    if (!email || !password || !selectedSchool) {
-      setError('Please fill in all fields, including selecting your active college.');
+    if (!email || !password || !selectedSchool || !firstName || !lastName || !gradYear || !registrationTime) {
+      setError('Please fill in all required fields.');
       return;
     }
-     if (password.length < 6) {
+    if (password.length < 6) {
       setError('Password should be at least 6 characters long.');
       return;
     }
 
-    // Domain Validation (uses selectedSchool string state)
     const expectedDomain = schoolDomainMap[selectedSchool];
     const actualDomain = getDomainFromEmail(email);
-
     if (!actualDomain || !expectedDomain || actualDomain !== expectedDomain) {
-      // Added check for expectedDomain in case selectedSchool isn't valid somehow
       setError(expectedDomain ? `Please use a valid @${expectedDomain} email address for ${selectedSchool}.` : 'Invalid school selection.');
       return;
     }
 
+    const parsedGradYear = parseInt(gradYear, 10);
+    if (isNaN(parsedGradYear) || gradYear.length !== 4) {
+         setError('Please enter a valid 4-digit graduation year.');
+         return;
+    }
+
+    if (!isValidTimeFormat(registrationTime)) {
+      setError('Please enter the registration time in H:MM or HH:MM format (e.g., 8:45 or 14:30).');
+      return;
+    }
+
+
     setIsLoading(true);
 
     try {
-      // 1. Create user in Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       console.log('User created in Auth:', user);
 
-
-      // 2. Send Verification Email with ActionCodeSettings **(CORRECTION ADDED HERE)**
-      try {
-        // Define settings for the verification link action
-        const actionCodeSettings: ActionCodeSettings = {
-          // URL to redirect back to after email verification SUCCESS on Firebase's page
-          // Ensure this domain (localhost:3000) is authorized in Firebase Auth settings
-          url: `${window.location.origin}/signin`, // Redirect to signin page after verification
-          handleCodeInApp: false // Firebase handles the code verification itself
-        };
-
-        await sendEmailVerification(user, actionCodeSettings); // Pass settings here
-        console.log('Verification email sent with actionCodeSettings.');
-
-      } catch (verificationError: any) {
-          console.error("Error sending verification email:", verificationError);
-          // Consider if you want to potentially delete the user if verification fails to send
-          // For now, set error and proceed with Firestore doc creation
-          setError("Account created, but failed to send verification email. Please contact support if needed.")
-      }
-      // --- End Send Verification Email Correction ---
-
-
-      // 3. Create user profile document in Firestore
       const userDocRef = doc(firestore, "users", user.uid);
       const userData = {
         uid: user.uid,
-        email: user.email,
-        school: selectedSchool, // Uses the selected school name string
-        name: "",
+        email: user.email, 
+        school: selectedSchool, 
+        graduationYear: parsedGradYear, 
+        registrationTime: registrationTime, 
+        name: `${firstName} ${lastName}`, 
         pfpUrl: "",
-        graduationYear: null,
-        major: "",
-        hometown: "",
+        bio:"",
         interests: [],
-        prompts: [],
-        answers: [],
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
 
       await setDoc(userDocRef, userData);
-      console.log('User profile created in Firestore');
+      console.log('User profile created in Firestore with new fields');
 
-      // Modify alert to mention verification
-      alert('Sign up successful! Please check your email inbox (and spam folder) for a verification link. You will be redirected.');
-      // Redirect to home page; logic there will push to /verify-email if needed
+      alert('Sign up successful! You will be redirected.');
       router.push('/');
 
     } catch (err: any) {
       console.error("Error signing up:", err);
-      // --- Error handling remains the same ---
        if (err.code === 'auth/email-already-in-use') {
         setError('This email address is already registered.');
       } else if (err.code === 'auth/weak-password') {
@@ -147,14 +134,40 @@ export default function SignUpPage() {
     }
   };
 
-  // --- Updated JSX Form using Combobox (remains the same structure as before) ---
   return (
     <div className="mx-auto my-12 max-w-md rounded-lg border border-gray-200 p-6 shadow-md">
       <h1 className="mb-6 text-center text-2xl font-semibold">Sign Up</h1>
       <form onSubmit={handleSignUp} className="space-y-4">
-        {/* Email Input */}
+
+        {/* First Name Input */}
         <div>
-          <label htmlFor="email-input" className="mb-1 block text-sm font-medium text-gray-700">Email:</label>
+          <label htmlFor="firstName-input" className="mb-1 block text-sm font-medium text-gray-700">First Name:</label>
+          <input
+            type="text"
+            id="firstName-input"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+            className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          />
+        </div>
+
+        {/* Last Name Input */}
+        <div>
+          <label htmlFor="lastName-input" className="mb-1 block text-sm font-medium text-gray-700">Last Name:</label>
+          <input
+            type="text"
+            id="lastName-input"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+            className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          />
+        </div>
+
+        {/* Email Input (no change) */}
+        <div>
+          <label htmlFor="email-input" className="mb-1 block text-sm font-medium text-gray-700">School Email:</label>
           <input
             type="email"
             id="email-input"
@@ -162,9 +175,11 @@ export default function SignUpPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
             className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            placeholder="your_school_email@..."
           />
         </div>
-        {/* Password Input */}
+
+        {/* Password Input (no change) */}
         <div>
           <label htmlFor="password-input" className="mb-1 block text-sm font-medium text-gray-700">Password:</label>
           <input
@@ -175,14 +190,46 @@ export default function SignUpPage() {
             required
             minLength={6}
             className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            placeholder="At least 6 characters"
           />
         </div>
 
-        {/* --- School Combobox --- */}
+         {/* Graduation Year Input */}
+        <div>
+          <label htmlFor="gradYear-input" className="mb-1 block text-sm font-medium text-gray-700">Graduation Year:</label>
+          <input
+            type="number" // Use number type for better mobile UX, but state is string
+            id="gradYear-input"
+            value={gradYear}
+            onChange={(e) => setGradYear(e.target.value)}
+            required
+            min="2000" // Optional: set min/max
+            max="2050"
+            step="1"
+            placeholder="YYYY"
+            className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" // Hide number spinners
+          />
+        </div>
+
+         {/* Registration Time Input */}
+         <div>
+           <label htmlFor="registrationTime-input" className="mb-1 block text-sm font-medium text-gray-700">Registration Time:</label>
+           <input
+            type="text" // Use text as time input type has inconsistent support/UI
+            id="registrationTime-input"
+            value={registrationTime}
+            onChange={(e) => setRegistrationTime(e.target.value)}
+            required
+            placeholder="H:MM or HH:MM (e.g. 8:45)"
+            className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+           />
+         </div>
+
+
+        {/* School Combobox (no functional change needed here) */}
         <div>
           <Combobox value={selectedSchool} onChange={setSelectedSchool}>
              <Combobox.Label className="mb-1 block text-sm font-medium text-gray-700">Active College:</Combobox.Label>
-             {/* ... rest of Combobox structure (Input, Button, Transition, Options) ... */}
               <div className="relative mt-1">
                 <div className="relative w-full cursor-default overflow-hidden rounded-md bg-white text-left border border-gray-300 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
                   <Combobox.Input
@@ -192,11 +239,14 @@ export default function SignUpPage() {
                     onChange={(event) => setQuery(event.target.value)}
                     placeholder="Search or select your college..."
                     autoComplete="off"
+                    required // Ensure combobox selection is also required by the browser
                   />
                   <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
+                     {/* Chevron Icon (no change) */}
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 text-gray-400" aria-hidden="true"><path fillRule="evenodd" d="M10 3a.75.75 0 0 1 .55.24l3.25 3.5a.75.75 0 1 1-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 0 1-1.1-1.02l3.25-3.5A.75.75 0 0 1 10 3Z" clipRule="evenodd" /><path fillRule="evenodd" d="M10 17a.75.75 0 0 1-.55-.24l-3.25-3.5a.75.75 0 1 1 1.1-1.02L10 15.148l2.7-2.91a.75.75 0 0 1 1.1 1.02l-3.25 3.5A.75.75 0 0 1 10 17Z" clipRule="evenodd" /></svg>
                   </Combobox.Button>
                 </div>
+                 {/* Transition and Options (no change) */}
                 <Transition as={Fragment} leave="transition ease-in duration-100" leaveFrom="opacity-100" leaveTo="opacity-0" afterLeave={() => setQuery('')}>
                   <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                     {filteredColleges.length === 0 && query !== '' ? (<div className="relative cursor-default select-none px-4 py-2 text-gray-700">Nothing found.</div>)
@@ -205,6 +255,7 @@ export default function SignUpPage() {
                           {({ selected, active }) => (<>
                               <span className={`block truncate ${ selected ? 'font-medium' : 'font-normal' }`}>{college.name}</span>
                               {selected ? (<span className={`absolute inset-y-0 left-0 flex items-center pl-3 ${ active ? 'text-white' : 'text-indigo-600' }`}>
+                                  {/* Checkmark Icon (no change) */}
                                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5" aria-hidden="true"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" /></svg>
                                 </span>)
                                : null}
@@ -220,6 +271,7 @@ export default function SignUpPage() {
 
 
         {error && <p className="text-sm text-red-600">{error}</p>}
+        {/* Submit Button (no change) */}
         <button
           type="submit"
           disabled={isLoading}
