@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { ChevronDown, ChevronUp, Calendar, Instagram } from "lucide-react";
+import { ChevronDown, ChevronUp, Calenda } from "lucide-react";
 
 // Enhanced type for user cards with additional information
 type UserCard = {
@@ -252,18 +252,6 @@ const GroupCard: React.FC<GroupCardProps> = ({
                                                     Contact:
                                                 </span>
                                                 <span>{user.contactInfo}</span>
-                                            </div>
-                                        )}
-
-                                        {user.instagramHandle && (
-                                            <div className="flex items-center text-gray-700">
-                                                <Instagram
-                                                    size={16}
-                                                    className="mr-2"
-                                                />
-                                                <span>
-                                                    {user.instagramHandle}
-                                                </span>
                                             </div>
                                         )}
 
