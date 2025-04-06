@@ -14,6 +14,8 @@ import {
     //deleteDoc,
     arrayRemove,
     deleteField,
+    serverTimestamp,
+    addDoc,
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase/firebaseConfig";
 import GroupCard from "./components/GroupCard";
@@ -327,20 +329,68 @@ export default function Dashboard() {
             alert("Error: Missing group data.");
             return;
         }
+
+        // Check if group has space
         if (userGroup.currentOccupancy >= userGroup.capacity) {
             console.warn("Cannot invite: Group is full.");
             alert("Cannot invite: Group is already full.");
             return;
         }
+
+        // Check if user is already in this group
         if (userGroup.members.includes(userIdToInvite)) {
             console.warn("Cannot invite: User is already in the group.");
             alert("User is already in this group.");
             return;
         }
 
-        console.log(`Inviting user ${userIdToInvite} to group ${userGroup.id}`);
-        // TODO: Implement Firestore logic to invite user
-        // It should create a request in requests tabel in Firestore with
+        try {
+            // Check if there's already a pending request for this user to this group
+            const requestsCollection = collection(db, "requests");
+            const existingRequestsQuery = query(
+                requestsCollection,
+                where("senderId", "==", currentUser.uid),
+                where("recipientGroupId", "==", userGroup.id),
+                where("recipientUserId", "==", userIdToInvite),
+                where("status", "==", "pending")
+            );
+
+            const existingRequestsSnapshot = await getDocs(
+                existingRequestsQuery
+            );
+
+            if (!existingRequestsSnapshot.empty) {
+                console.warn("A pending invite already exists for this user.");
+                alert("You've already sent an invitation to this user.");
+                return;
+            }
+
+            // Create a new request document
+            const newRequest = await addDoc(collection(db, "requests"), {
+                GroupId: userGroup.id,
+                GroupName: userGroup.groupName,
+                GroupLeaderId: userGroup.creatorId,
+                senderId: currentUser.uid,
+                senderName: currentUser.name,
+                recipientUserId: userIdToInvite,
+                status: "pending",
+                createdAt: serverTimestamp(),
+                fromGroup: true,
+            });
+
+            console.log(
+                `Invitation sent successfully with ID: ${newRequest.id}`
+            );
+            alert("Invitation sent successfully!");
+
+            // Remove the invited user from the list of ungrouped users to avoid duplicate invites
+            setUngroupedUsers(
+                ungroupedUsers.filter((user) => user.uid !== userIdToInvite)
+            );
+        } catch (error) {
+            console.error("Error sending invitation:", error);
+            alert("Failed to send invitation. Please try again.");
+        }
     };
 
     const handleLeaveGroup = async (groupId: string) => {
@@ -555,18 +605,16 @@ export default function Dashboard() {
                                     </div>
                                 </div>
 
-                                {currentUser.group_leader && (
-                                    <div className="mt-4 md:mt-0">
-                                        <button
-                                            onClick={() =>
-                                                handleLeaveGroup(userGroup.id)
-                                            }
-                                            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow transition duration-200"
-                                        >
-                                            Leave Group
-                                        </button>
-                                    </div>
-                                )}
+                                <div className="mt-4 md:mt-0">
+                                    <button
+                                        onClick={() =>
+                                            handleLeaveGroup(userGroup.id)
+                                        }
+                                        className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow transition duration-200"
+                                    >
+                                        Leave Group
+                                    </button>
+                                </div>
                             </div>
 
                             {userGroup.description && (
