@@ -340,31 +340,8 @@ export default function Dashboard() {
         }
 
         console.log(`Inviting user ${userIdToInvite} to group ${userGroup.id}`);
-        alert(
-            `TODO: Implement Firestore logic to invite user ${userIdToInvite}`
-        );
-        // --- Firestore Logic (Example using batch write) ---
-        // const batch = writeBatch(db);
-        // const groupRef = doc(db, "groups", userGroup.id);
-        // const userToInviteRef = doc(db, "users", userIdToInvite);
-
-        // batch.update(groupRef, {
-        //     members: arrayUnion(userIdToInvite)
-        // });
-        // batch.update(userToInviteRef, {
-        //     is_grouped: true,
-        //     groupId: userGroup.id
-        // });
-
-        // try {
-        //     await batch.commit();
-        //     console.log("User invited successfully!");
-        //     // Refresh data
-        //     fetchUserGroupData(currentUser);
-        // } catch (error) {
-        //     console.error("Error inviting user:", error);
-        //     alert("Failed to invite user. Please try again.");
-        // }
+        // TODO: Implement Firestore logic to invite user
+        // It should create a request in requests tabel in Firestore with
     };
 
     const handleLeaveGroup = async (groupId: string) => {
@@ -483,31 +460,28 @@ export default function Dashboard() {
         console.log(
             `Removing member ${memberIdToRemove} from group ${userGroup.id}`
         );
-        alert(
-            `TODO: Implement Firestore logic to remove member ${memberIdToRemove}`
-        );
-        // --- Firestore Logic (Example using batch write) ---
-        // const batch = writeBatch(db);
-        // const groupRef = doc(db, "groups", userGroup.id);
-        // const memberToRemoveRef = doc(db, "users", memberIdToRemove);
 
-        // batch.update(groupRef, {
-        //     members: arrayRemove(memberIdToRemove)
-        // });
-        // batch.update(memberToRemoveRef, {
-        //     is_grouped: false,
-        //     groupId: deleteField() // Remove groupId field
-        // });
+        const batch = writeBatch(db);
+        const groupRef = doc(db, "groups", userGroup.id);
+        const memberToRemoveRef = doc(db, "users", memberIdToRemove);
 
-        // try {
-        //     await batch.commit();
-        //     console.log("Member removed successfully!");
-        //     // Refresh data
-        //     fetchUserGroupData(currentUser);
-        // } catch (error) {
-        //     console.error("Error removing member:", error);
-        //     alert("Failed to remove member. Please try again.");
-        // }
+        batch.update(groupRef, {
+            members: arrayRemove(memberIdToRemove),
+        });
+        batch.update(memberToRemoveRef, {
+            is_grouped: false,
+            groupId: deleteField(),
+        });
+
+        try {
+            await batch.commit();
+            console.log("Member removed successfully!");
+            // Refresh data
+            fetchUserGroupData(currentUser);
+        } catch (error) {
+            console.error("Error removing member:", error);
+            alert("Failed to remove member. Please try again.");
+        }
     };
 
     // --- Render Logic ---
