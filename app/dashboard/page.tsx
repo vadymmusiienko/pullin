@@ -577,6 +577,14 @@ export default function Dashboard() {
                 pendingUsers: arrayUnion(userIdToInvite),
             });
 
+            const userToInviteRef = doc(db, "users", userIdToInvite);
+            const userToInviteSnap = await getDoc(userToInviteRef);
+            
+            if (!userToInviteSnap.exists()) {
+                throw new Error("User to invite not found");
+            }
+            const userToInviteData = userToInviteSnap.data();
+
             // Prepare the request document data
             const requestData = {
                 GroupId: userGroup.id,
@@ -587,7 +595,7 @@ export default function Dashboard() {
                 createdAt: serverTimestamp(),
                 fromGroup: true,
                 hasSeen: false,
-                nameuser: currentUser.name,
+                nameuser: userToInviteData.name,
             };
 
             // Create a new request document reference
