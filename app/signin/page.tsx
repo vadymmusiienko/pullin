@@ -76,7 +76,7 @@ export default function SignInPage() {
             <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden">
                 <div className="p-8">
                     <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent mb-6">
-                        Sign In to Pull𝕚n
+                        Sign In to Pull-In
                     </h1>
 
                     <form onSubmit={handleSignIn} className="space-y-5">

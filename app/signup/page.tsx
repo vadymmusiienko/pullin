@@ -177,7 +177,7 @@ export default function SignUpPage() {
             <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden">
                 <div className="p-8">
                     <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent mb-6">
-                        Create Your Pull𝕚n Account
+                        Create Your Pull-In Account
                     </h1>
 
                     <form onSubmit={handleSignUp} className="space-y-5">

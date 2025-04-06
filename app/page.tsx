@@ -9,7 +9,7 @@ export default function Home() {
                     {/* Left Content Area */}
                     <div className="p-8 md:p-12 flex flex-col justify-center md:w-3/5">
                         <h1 className="text-5xl font-bold bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent mb-6">
-                            Pull𝕚n
+                            Pull-In
                         </h1>
                         <p className="text-xl text-gray-700 mb-8 leading-relaxed">
                             Effortlessly connect students with housing
@@ -32,7 +32,7 @@ export default function Home() {
                             {/* 2. Replace the nested circle divs with the Image component */}
                             <Image
                                 src="/logo.png" // <-- 3. IMPORTANT: Update this path to your logo file in the /public folder
-                                alt="PullIn Logo" // <-- 4. Add descriptive alt text
+                                alt="Pull-In Logo" // <-- 4. Add descriptive alt text
                                 width={1000} // <-- 5. Set desired width (adjust as needed)
                                 height={1000} // <-- 6. Set desired height (adjust as needed)
                                 priority // Optional: Add if the logo is critical for LCP (Largest Contentful Paint)
