@@ -545,61 +545,256 @@ export default function Dashboard() {
 
         // Render the grouped user's view (Your Group Info + Ungrouped Users for Invite)
         return (
-            <div className="min-h-screen bg-gray-100 py-10 px-4 sm:px-6">
+            <div className="min-h-screen bg-gradient-to-br from-teal-400 to-blue-500 py-10 px-4 sm:px-6">
                 <div className="max-w-7xl mx-auto">
-                    {/* Display User's Current Group Info Here (Optional) */}
-                    <div className="mb-8 p-6 bg-white rounded-xl shadow-lg">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                            Your Group: {userGroup.groupName}
-                        </h2>
-                        <p className="text-gray-600 mb-2">
-                            Capacity: {userGroup.currentOccupancy} /{" "}
-                            {userGroup.capacity}
+                    {/* Header */}
+                    <div className="mb-10 text-center">
+                        <h1 className="text-3xl font-bold text-white mb-2">
+                            Your Housing Group
+                        </h1>
+                        <p className="text-white text-opacity-80 max-w-2xl mx-auto">
+                            Manage your group and invite new members to join.
                         </p>
-                        {userGroup.description && (
-                            <p className="text-gray-600 mb-4">
-                                Description: {userGroup.description}
-                            </p>
-                        )}
-                        {/* Maybe list current members simply here */}
-                        <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                            Members:
-                        </h3>
-                        <ul className="list-disc list-inside text-gray-600 space-y-1 mb-4">
-                            {groupMembers.map((member) => (
-                                <li key={member.uid}>
-                                    {member.name}{" "}
-                                    {member.uid === currentUser.uid
-                                        ? "(You)"
-                                        : ""}{" "}
-                                    {member.uid === userGroup.creatorId
-                                        ? "(Leader)"
-                                        : ""}
-                                </li>
-                            ))}
-                        </ul>
-                        {/* Leader actions can also go here */}
-                        {currentUser.group_leader && (
-                            <div className="mt-4 flex flex-col sm:flex-row gap-3 border-t pt-4">
-                                {/* <button className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg shadow transition duration-200">
-                                     Edit Group Details
-                                 </button> */}
-                                {/* Delete/Remove actions might be better placed within DisplayUsers or a dedicated Manage section */}
-                            </div>
-                        )}
                     </div>
 
-                    {/* Display Ungrouped Users using DisplayUsers Component */}
-                    <DisplayUsers
-                        users={ungroupedUsers}
-                        onInviteUser={handleInviteUser}
-                        currentUserIsLeader={currentUser.group_leader}
-                        currentGroup={userGroup} // Pass group data
-                        currentGroupMembers={groupMembers} // Pass full member data
-                        onDeleteGroup={handleDeleteGroup} // Pass delete handler
-                        onRemoveMember={handleRemoveMember} // Pass remove handler
-                        currentUserId={currentUser.uid} // Pass current user's ID
-                    />
+                    {/* Group Info Card */}
+                    <div className="mb-8 bg-white bg-opacity-95 rounded-xl shadow-lg overflow-hidden">
+                        <div
+                            className={`h-3 bg-${userGroup.colorScheme}-500 w-full`}
+                        ></div>
+                        <div className="p-6">
+                            <div className="flex flex-col md:flex-row md:justify-between md:items-center">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                                        {userGroup.groupName}
+                                    </h2>
+                                    <div className="flex items-center space-x-4 mb-4">
+                                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                                            {userGroup.currentOccupancy} /{" "}
+                                            {userGroup.capacity} Members
+                                        </span>
+                                        {currentUser.group_leader && (
+                                            <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                                                Group Leader
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {currentUser.group_leader && (
+                                    <div className="mt-4 md:mt-0">
+                                        <button
+                                            onClick={() =>
+                                                handleDeleteGroup(userGroup.id)
+                                            }
+                                            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow transition duration-200"
+                                        >
+                                            Delete Group
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {userGroup.description && (
+                                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                                    <h3 className="text-md font-semibold text-gray-700 mb-2">
+                                        About Our Group
+                                    </h3>
+                                    <p className="text-gray-600">
+                                        {userGroup.description}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Group Members */}
+                            <div className="mt-6">
+                                <h3 className="text-lg font-semibold text-gray-700 mb-4 pb-2 border-b">
+                                    Group Members
+                                </h3>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {groupMembers.map((member) => (
+                                        <div
+                                            key={member.uid}
+                                            className="flex items-center p-3 bg-gray-50 rounded-lg"
+                                        >
+                                            <div className="h-10 w-10 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 font-bold mr-3">
+                                                {member.name
+                                                    .charAt(0)
+                                                    .toUpperCase()}
+                                            </div>
+                                            <div className="flex-grow">
+                                                <div className="font-medium">
+                                                    {member.name}
+                                                    {member.uid ===
+                                                        currentUser.uid && (
+                                                        <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                                                            You
+                                                        </span>
+                                                    )}
+                                                    {member.uid ===
+                                                        userGroup.creatorId && (
+                                                        <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+                                                            Leader
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="text-sm text-gray-500">
+                                                    Class of{" "}
+                                                    {member.graduationYear}
+                                                </div>
+                                            </div>
+                                            {currentUser.group_leader &&
+                                                member.uid !==
+                                                    currentUser.uid && (
+                                                    <button
+                                                        onClick={() =>
+                                                            handleRemoveMember(
+                                                                member.uid
+                                                            )
+                                                        }
+                                                        className="text-red-500 hover:text-red-700 transition-colors"
+                                                        title="Remove member"
+                                                    >
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            className="h-5 w-5"
+                                                            viewBox="0 0 20 20"
+                                                            fill="currentColor"
+                                                        >
+                                                            <path
+                                                                fillRule="evenodd"
+                                                                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                                                clipRule="evenodd"
+                                                            />
+                                                        </svg>
+                                                    </button>
+                                                )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Invitations Section */}
+                    <div className="bg-white bg-opacity-95 rounded-xl shadow-lg overflow-hidden">
+                        <div className="p-6">
+                            <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                                {userGroup.currentOccupancy < userGroup.capacity
+                                    ? "Invite New Members"
+                                    : "Group is Full"}
+                            </h2>
+
+                            {/* Allow search and filtering of ungrouped users */}
+                            {userGroup.currentOccupancy <
+                                userGroup.capacity && (
+                                <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            placeholder="Search for users to invite..."
+                                            className="w-full py-2 px-4 bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                            // TODO: Add search state and handler
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {userGroup.currentOccupancy >=
+                            userGroup.capacity ? (
+                                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                                    <p className="text-yellow-700">
+                                        Your group has reached maximum capacity.
+                                        To invite new members, someone must
+                                        leave first.
+                                    </p>
+                                </div>
+                            ) : ungroupedUsers.length === 0 ? (
+                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                                    <p className="text-gray-600">
+                                        No users available to invite at the
+                                        moment.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div>
+                                    {/* Ungrouped Users Grid */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {ungroupedUsers.map((user) => (
+                                            <div
+                                                key={user.uid}
+                                                className="border border-gray-200 rounded-lg p-4 flex items-center"
+                                            >
+                                                <div className="h-12 w-12 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 font-bold mr-3">
+                                                    {user.name
+                                                        .charAt(0)
+                                                        .toUpperCase()}
+                                                </div>
+                                                <div className="flex-grow">
+                                                    <div className="font-medium text-gray-900">
+                                                        {user.name}
+                                                    </div>
+                                                    <div className="text-sm text-gray-500">
+                                                        Class of{" "}
+                                                        {user.graduationYear}
+                                                    </div>
+                                                    {user.interests &&
+                                                        user.interests.length >
+                                                            0 && (
+                                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                                {user.interests
+                                                                    .slice(0, 2)
+                                                                    .map(
+                                                                        (
+                                                                            interest,
+                                                                            idx
+                                                                        ) => (
+                                                                            <span
+                                                                                key={
+                                                                                    idx
+                                                                                }
+                                                                                className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs"
+                                                                            >
+                                                                                {
+                                                                                    interest
+                                                                                }
+                                                                            </span>
+                                                                        )
+                                                                    )}
+                                                                {user.interests
+                                                                    .length >
+                                                                    2 && (
+                                                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
+                                                                        +
+                                                                        {user
+                                                                            .interests
+                                                                            .length -
+                                                                            2}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                </div>
+                                                <button
+                                                    onClick={() =>
+                                                        handleInviteUser(
+                                                            user.uid
+                                                        )
+                                                    }
+                                                    className="ml-2 px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded transition duration-200"
+                                                >
+                                                    Invite
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Add pagination controls if needed */}
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         );
