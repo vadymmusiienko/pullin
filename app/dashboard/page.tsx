@@ -218,6 +218,7 @@ export default function Dashboard() {
             // Prepare the request document data
             const requestData = {
                 userid: currentUser.uid,
+                nameuser: currentUser.name,
                 GroupId: groupId,
                 GroupName: groupData.groupName,
                 GroupLeaderId: groupData.creatorId,
@@ -567,6 +568,7 @@ export default function Dashboard() {
                 createdAt: serverTimestamp(),
                 fromGroup: true,
                 hasSeen: false,
+                nameuser: currentUser.name,
             };
 
             // Create a new request document reference
