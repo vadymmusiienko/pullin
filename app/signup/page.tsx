@@ -2,7 +2,7 @@
 
 import React, { useState, Fragment } from "react";
 import { useRouter } from "next/navigation";
-import { auth, firestore } from "@/lib/firebase/firebaseConfig";
+import { auth, db } from "@/lib/firebase/firebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { Combobox, Transition } from "@headlessui/react";
@@ -131,7 +131,7 @@ export default function SignUpPage() {
             );
             const user = userCredential.user;
 
-            const userDocRef = doc(firestore, "users", user.uid);
+            const userDocRef = doc(db, "users", user.uid);
             const userData = {
                 uid: user.uid,
                 email: user.email,
