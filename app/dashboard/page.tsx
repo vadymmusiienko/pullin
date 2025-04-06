@@ -175,7 +175,6 @@ export default function Dashboard() {
             alert("Please log in to request joining a group");
             return;
         }
-
         if (currentUser.is_grouped) {
             console.error("User is already in a group");
             alert(
@@ -183,20 +182,16 @@ export default function Dashboard() {
             );
             return;
         }
-
         try {
             // Get the group data to access necessary information
             const groupDocRef = doc(db, "groups", groupId);
             const groupDoc = await getDoc(groupDocRef);
-
             if (!groupDoc.exists()) {
                 console.error("Group not found");
                 alert("This group no longer exists");
                 return;
             }
-
             const groupData = groupDoc.data();
-
             // Check if group is already full
             if (
                 groupData.members &&
@@ -206,7 +201,6 @@ export default function Dashboard() {
                 alert("This group is already at full capacity");
                 return;
             }
-
             // Check if user already has a pending request to this group using the user's array
             if (
                 currentUser.pendingRequests &&
@@ -218,10 +212,8 @@ export default function Dashboard() {
                 alert("You already have a pending request to join this group");
                 return;
             }
-
             // Create a batch to ensure operations are atomic
             const batch = writeBatch(db);
-
             // Prepare the request document data
             const requestData = {
                 userid: currentUser.uid,
@@ -234,22 +226,23 @@ export default function Dashboard() {
                 fromGroup: false,
                 hasSeen: false,
             };
-
             // Create a new request document in the 'requests' collection
             const newRequestRef = doc(collection(db, "requests"));
             batch.set(newRequestRef, requestData);
-
             // Update the user's pendingRequests array in the 'users' collection
             const userDocRef = doc(db, "users", currentUser.uid);
             batch.update(userDocRef, {
                 pendingRequests: arrayUnion(groupId),
             });
 
+            // Update the group's pendingUsers array
+            batch.update(groupDocRef, {
+                pendingUsers: arrayUnion(currentUser.uid),
+            });
+
             // Commit all batched operations
             await batch.commit();
-
             alert("Your request to join the group has been sent!");
-
             // Update *local* current user state to include the new pending request
             // for immediate UI feedback.
             setCurrentUser({
@@ -260,7 +253,6 @@ export default function Dashboard() {
                     groupId,
                 ],
             });
-
             // Update the UI to reflect changes (e.g., refresh list of groups)
             await fetchRecommendedGroups();
         } catch (error) {
