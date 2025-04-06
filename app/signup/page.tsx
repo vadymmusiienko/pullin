@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Fragment } from "react";
+import React, { useState, Fragment, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase/firebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
@@ -57,6 +57,46 @@ export default function SignUpPage() {
     const [gradYear, setGradYear] = useState("");
     const [registrationTime, setRegistrationTime] = useState("");
 
+    // Add styles to fix scrolling and combobox focus styles
+    useEffect(() => {
+        const styleElement = document.createElement('style');
+        styleElement.innerHTML = `
+            .combobox-options-container {
+                max-height: 200px;
+                overflow-y: auto !important;
+                position: absolute;
+                z-index: 50;
+                width: 100%;
+                margin-top: 0.25rem;
+                border-radius: 0.75rem;
+                background-color: white;
+                padding: 0.25rem 0;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                ring-width: 1px;
+                ring-color: rgba(0, 0, 0, 0.05);
+            }
+
+            body {
+                overflow: auto !important;
+            }
+            
+            .combobox-input-container:focus-within {
+                outline: none;
+                --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+                --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+                box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+                --tw-ring-color: #14b8a6;
+                --tw-ring-opacity: 1;
+                border-color: transparent;
+            }
+        `;
+        document.head.appendChild(styleElement);
+
+        return () => {
+            document.head.removeChild(styleElement);
+        };
+    }, []);
+
     const getDomainFromEmail = (email: string): string | null => {
         const parts = email.split("@");
         return parts.length === 2 ? parts[1].toLowerCase() : null;
@@ -92,7 +132,6 @@ export default function SignUpPage() {
             setError("Password should be at least 6 characters long.");
             return;
         }
-
         const expectedDomain = schoolDomainMap[selectedSchool];
         const actualDomain = getDomainFromEmail(email);
         if (
@@ -107,13 +146,11 @@ export default function SignUpPage() {
             );
             return;
         }
-
         const parsedGradYear = parseInt(gradYear, 10);
         if (isNaN(parsedGradYear) || gradYear.length !== 4) {
             setError("Please enter a valid 4-digit graduation year.");
             return;
         }
-
         if (!isValidTimeFormat(registrationTime)) {
             setError(
                 "Please enter the registration time in H:MM or HH:MM format (e.g., 8:45 or 14:30)."
@@ -173,14 +210,18 @@ export default function SignUpPage() {
     };
 
     return (
-        <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-400 to-blue-500 p-6">
-            <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden">
+        // Main container needs to allow scrolling if content overflows viewport
+        <main className="min-h-screen flex justify-center bg-gradient-to-br from-teal-400 to-blue-500 p-6 overflow-y-auto">
+             {/* Added overflow-y-auto here to ensure the main area scrolls if needed */}
+            <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl my-auto">
+            {/* Added my-auto to help center vertically if content is short */}
                 <div className="p-8">
                     <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent mb-6">
                         Create Your Pull-In Account
                     </h1>
 
                     <form onSubmit={handleSignUp} className="space-y-5">
+                        {/* --- Form Inputs (remain the same) --- */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             {/* First Name Input */}
                             <div>
@@ -272,7 +313,8 @@ export default function SignUpPage() {
                                     Your College
                                 </Combobox.Label>
                                 <div className="relative">
-                                    <div className="w-full cursor-default overflow-hidden rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 text-left bg-white">
+                                    {/* Updated container to have custom class for focusing */}
+                                    <div className="w-full cursor-default overflow-hidden rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 combobox-input-container">
                                         <Combobox.Input
                                             id="school-combobox"
                                             className="w-full px-4 py-2.5 text-gray-900 border-none focus:ring-0"
@@ -287,24 +329,8 @@ export default function SignUpPage() {
                                             required
                                         />
                                         <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                viewBox="0 0 20 20"
-                                                fill="currentColor"
-                                                className="h-5 w-5 text-gray-400"
-                                                aria-hidden="true"
-                                            >
-                                                <path
-                                                    fillRule="evenodd"
-                                                    d="M10 3a.75.75 0 0 1 .55.24l3.25 3.5a.75.75 0 1 1-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 0 1-1.1-1.02l3.25-3.5A.75.75 0 0 1 10 3Z"
-                                                    clipRule="evenodd"
-                                                />
-                                                <path
-                                                    fillRule="evenodd"
-                                                    d="M10 17a.75.75 0 0 1-.55-.24l-3.25-3.5a.75.75 0 1 1 1.1-1.02L10 15.148l2.7-2.91a.75.75 0 0 1 1.1 1.02l-3.25 3.5A.75.75 0 0 1 10 17Z"
-                                                    clipRule="evenodd"
-                                                />
-                                            </svg>
+                                            {/* Chevron Icon */}
+                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 text-gray-400" aria-hidden="true"> <path fillRule="evenodd" d="M10 3a.75.75 0 0 1 .55.24l3.25 3.5a.75.75 0 1 1-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 0 1-1.1-1.02l3.25-3.5A.75.75 0 0 1 10 3Z" clipRule="evenodd" /> <path fillRule="evenodd" d="M10 17a.75.75 0 0 1-.55-.24l-3.25-3.5a.75.75 0 1 1 1.1-1.02L10 15.148l2.7-2.91a.75.75 0 0 1 1.1 1.02l-3.25 3.5A.75.75 0 0 1 10 17Z" clipRule="evenodd" /> </svg>
                                         </Combobox.Button>
                                     </div>
                                     <Transition
@@ -314,7 +340,8 @@ export default function SignUpPage() {
                                         leaveTo="opacity-0"
                                         afterLeave={() => setQuery("")}
                                     >
-                                        <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                        {/* Using custom class for Options */}
+                                        <Combobox.Options className="combobox-options-container">
                                             {filteredColleges.length === 0 &&
                                             query !== "" ? (
                                                 <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
@@ -360,19 +387,8 @@ export default function SignUpPage() {
                                                                                     : "text-teal-500"
                                                                             }`}
                                                                         >
-                                                                            <svg
-                                                                                xmlns="http://www.w3.org/2000/svg"
-                                                                                viewBox="0 0 20 20"
-                                                                                fill="currentColor"
-                                                                                className="h-5 w-5"
-                                                                                aria-hidden="true"
-                                                                            >
-                                                                                <path
-                                                                                    fillRule="evenodd"
-                                                                                    d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
-                                                                                    clipRule="evenodd"
-                                                                                />
-                                                                            </svg>
+                                                                           {/* Check Icon */}
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5" aria-hidden="true"> <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" /> </svg>
                                                                         </span>
                                                                     ) : null}
                                                                 </>
@@ -387,6 +403,7 @@ export default function SignUpPage() {
                             </Combobox>
                         </div>
 
+                         {/* --- Form Inputs (continued, remain the same) --- */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             {/* Graduation Year Input */}
                             <div>
@@ -434,13 +451,14 @@ export default function SignUpPage() {
                             </div>
                         </div>
 
+                        {/* Error Display (remains the same) */}
                         {error && (
                             <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
                                 <p className="text-sm text-red-700">{error}</p>
                             </div>
                         )}
 
-                        {/* Submit Button */}
+                        {/* Submit Button (remains the same) */}
                         <button
                             type="submit"
                             disabled={isLoading}
@@ -448,26 +466,8 @@ export default function SignUpPage() {
                         >
                             {isLoading ? (
                                 <span className="flex items-center justify-center">
-                                    <svg
-                                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <circle
-                                            className="opacity-25"
-                                            cx="12"
-                                            cy="12"
-                                            r="10"
-                                            stroke="currentColor"
-                                            strokeWidth="4"
-                                        ></circle>
-                                        <path
-                                            className="opacity-75"
-                                            fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                        ></path>
-                                    </svg>
+                                    {/* Loading Spinner SVG */}
+                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"> <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle> <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg>
                                     Creating your account...
                                 </span>
                             ) : (
