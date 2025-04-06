@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase/firebaseConfig';
@@ -10,6 +10,7 @@ import {
   serverTimestamp,
   doc,
   updateDoc,
+  getDoc,
 } from 'firebase/firestore';
 
 export default function CreateGroupPage() {
@@ -21,6 +22,29 @@ export default function CreateGroupPage() {
   const [capacity, setCapacity] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userSchool, setUserSchool] = useState<string>(''); // State to store user's school
+
+  // Fetch current user's school
+  const fetchUserSchool = useCallback(async (userId: string) => {
+    try {
+      const userDocRef = doc(db, 'users', userId);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setUserSchool(userData.school || '');
+      }
+    } catch (err) {
+      console.error("Error fetching user's school:", err);
+    }
+  }, []);
+
+  // Effect to fetch user data when component mounts
+  useEffect(() => {
+    if (!authLoading && user) {
+      fetchUserSchool(user.uid);
+    }
+  }, [user, authLoading, fetchUserSchool]);
 
   const handleCreateGroup = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -52,6 +76,7 @@ export default function CreateGroupPage() {
       creatorId: user.uid,
       members: [user.uid], // Start with the creator as the first member
       createdAt: serverTimestamp(),
+      school: userSchool, // Add the school field to the group data
       // groupId field will be added in the update step below
     };
 
@@ -161,6 +186,13 @@ export default function CreateGroupPage() {
                   className="w-24 py-2 px-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition duration-150 ease-in-out sm:text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 />
               </div>
+              {userSchool && (
+                <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    Your group will be created for <span className="font-medium">{userSchool}</span>
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="pt-5">

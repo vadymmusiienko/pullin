@@ -246,9 +246,12 @@ export default function Dashboard() {
 
     // --- Function to Fetch Recommended Groups ---
     const fetchRecommendedGroups = async () => {
+        if (!currentUser) return;
+
         try {
             const groupsQuery = query(
                 collection(db, "groups"),
+                where("school", "==", currentUser.school), 
                 limit(6) // Fetch a limited number for recommendations
             );
             const groupsSnapshot = await getDocs(groupsQuery);
@@ -353,6 +356,7 @@ export default function Dashboard() {
             const ungroupedUsersQuery = query(
                 usersCollectionRef,
                 where("is_grouped", "==", false),
+                where("school", "==", userData.school),
                 limit(20)
             );
             const ungroupedSnapshot = await getDocs(ungroupedUsersQuery);
