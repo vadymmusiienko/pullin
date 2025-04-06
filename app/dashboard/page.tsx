@@ -223,6 +223,7 @@ export default function Dashboard() {
                 status: "pending",
                 createdAt: serverTimestamp(),
                 fromGroup: false,
+                hasSeen: false,
             };
 
             // Create a new request document in the 'requests' collection
@@ -543,6 +544,7 @@ export default function Dashboard() {
                 status: "pending",
                 createdAt: serverTimestamp(),
                 fromGroup: true,
+                hasSeen: false,
             };
 
             // Create a new request document reference
