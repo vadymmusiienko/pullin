@@ -62,6 +62,7 @@ export default function CreateGroupPage() {
       const userDocRef = doc(db, 'users', user.uid);
       await updateDoc(userDocRef, {
           group_leader: true,
+          is_grouped:true,
           updatedAt: serverTimestamp()
       });
       console.log("User document updated with group_leader: true");
