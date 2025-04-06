@@ -1,7 +1,35 @@
-import Link from 'next/link';
-import Image from 'next/image';
-        
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase/firebaseConfig";
+import Loading from "./components/loading";
+
+import Link from "next/link";
+import Image from "next/image";
+
 export default function Home() {
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("User authenticated, redirecting to dashboard...");
+                router.replace("/dashboard");
+            } else {
+                setIsLoading(false);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [router]);
+
+    if (isLoading) {
+        return <Loading />;
+    }
+
     return (
         <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-400 to-blue-500 p-6">
             <div className="max-w-3xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden">
@@ -16,11 +44,16 @@ export default function Home() {
                             registration times to peers looking for suites.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4">
-                            {/* TODO: Work on sign in and sign up buttons */}
-                            <Link href="/signup" className="px-8 py-3 bg-gradient-to-r from-teal-400 to-teal-500 text-white font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300">
+                            <Link
+                                href="/signup"
+                                className="text-center px-8 py-3 bg-gradient-to-r from-teal-400 to-teal-500 text-white font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300"
+                            >
                                 Sign Up
                             </Link>
-                            <Link href="/signin" className="px-8 py-3 bg-white border-2 border-teal-400 text-teal-500 font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300">
+                            <Link
+                                href="/signin"
+                                className="text-center px-8 py-3 bg-white border-2 border-teal-400 text-teal-500 font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300"
+                            >
                                 Sign In
                             </Link>
                         </div>
@@ -29,15 +62,12 @@ export default function Home() {
                     {/* Right Decorative Area */}
                     <div className="hidden md:block md:w-1/2 bg-gradient-to-br from-teal-400 to-blue-500 p-12">
                         <div className="h-full flex items-center justify-center">
-                            {/* 2. Replace the nested circle divs with the Image component */}
                             <Image
-                                src="/logo.png" // <-- 3. IMPORTANT: Update this path to your logo file in the /public folder
-                                alt="Pull-In Logo" // <-- 4. Add descriptive alt text
-                                width={1000} // <-- 5. Set desired width (adjust as needed)
-                                height={1000} // <-- 6. Set desired height (adjust as needed)
-                                priority // Optional: Add if the logo is critical for LCP (Largest Contentful Paint)
-                                // You can add className for extra styling if necessary, e.g.,
-                                // className="rounded-full" // If you want the logo container itself to be round
+                                src="/logo.png" // Make sure this path is correct (in /public folder)
+                                alt="Pull-In Logo"
+                                width={1000} // Adjust as needed
+                                height={1000} // Adjust as needed
+                                priority
                             />
                         </div>
                     </div>

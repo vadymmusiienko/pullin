@@ -13,9 +13,11 @@ import {
     // Add necessary functions for deleting/updating later
     // writeBatch, deleteDoc, updateDoc, arrayRemove, arrayUnion
 } from "firebase/firestore";
-import { db, auth } from "@/lib/firebase/firebaseConfig"; // Adjust the import path as needed
+import { db, auth } from "@/lib/firebase/firebaseConfig";
 import GroupCard from "./components/GroupCard";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import Loading from "../components/loading";
 
 // Define type for color schemes to match the expected values
 type ColorScheme = "blue" | "green" | "purple" | "orange" | "pink";
@@ -25,7 +27,7 @@ export interface GroupMemberCard {
     id: string;
     name: string;
     year: string;
-    registrationTime: string; // Keep if needed, otherwise optional
+    registrationTime: string;
     pfpUrl?: string; // Add profile picture URL
 }
 
@@ -62,6 +64,7 @@ export interface UserData {
 }
 
 export default function Dashboard() {
+    const router = useRouter();
     const createGroupPath = "/create_group";
     const [recommendedGroups, setRecommendedGroups] = useState<GroupData[]>([]); // Renamed for clarity
     const [userGroup, setUserGroup] = useState<GroupData | null>(null); // State for the user's current group
@@ -115,14 +118,13 @@ export default function Dashboard() {
                         // setLoadingGroupView is handled within fetch functions
                     }
                 } else {
-                    console.log("No user signed in.");
                     setCurrentUser(null);
                     setRecommendedGroups([]);
                     setUserGroup(null);
                     setUngroupedUsers([]);
                     setGroupMembers([]);
-                    setLoading(false);
                     setLoadingGroupView(false);
+                    router.replace("/signin");
                 }
             });
 
@@ -481,42 +483,14 @@ export default function Dashboard() {
 
     // Loading state for initial user check or recommended groups
     if (loading) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center">
-                <div className="text-center py-10">
-                    <div
-                        className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-white border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite]"
-                        role="status"
-                    >
-                        <span className="sr-only">Loading...</span>
-                    </div>
-                    <p className="mt-4 text-white text-lg">
-                        Loading Dashboard...
-                    </p>
-                </div>
-            </div>
-        );
+        return <Loading loadingText="loading dashboard..." />;
     }
 
     // --- Display for Grouped Users ---
     if (currentUser?.is_grouped) {
         // Loading state specifically for the grouped user's view data
         if (loadingGroupView) {
-            return (
-                <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 flex items-center justify-center">
-                    <div className="text-center py-10">
-                        <div
-                            className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite]"
-                            role="status"
-                        >
-                            <span className="sr-only">Loading...</span>
-                        </div>
-                        <p className="mt-4 text-gray-700 text-lg">
-                            Loading Your Group...
-                        </p>
-                    </div>
-                </div>
-            );
+            return <Loading loadingText="loading your group..." />;
         }
 
         if (!userGroup) {
