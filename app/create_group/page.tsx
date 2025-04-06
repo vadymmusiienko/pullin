@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { firestore } from '@/lib/firebase/firebaseConfig';
+import { db } from '@/lib/firebase/firebaseConfig';
 import {
   collection,
   addDoc,
@@ -55,11 +55,11 @@ export default function CreateGroupPage() {
     };
 
     try {
-      const groupsCollectionRef = collection(firestore, 'groups');
+      const groupsCollectionRef = collection(db, 'groups');
       const newDocRef = await addDoc(groupsCollectionRef, newGroupData);
       console.log("Group created (client-side) with ID: ", newDocRef.id);
 
-      const userDocRef = doc(firestore, 'users', user.uid);
+      const userDocRef = doc(db, 'users', user.uid);
       await updateDoc(userDocRef, {
           group_leader: true,
           updatedAt: serverTimestamp()

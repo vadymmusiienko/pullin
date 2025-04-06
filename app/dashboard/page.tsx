@@ -186,13 +186,6 @@ export default function Dashboard() {
         return matchesSearch && matchesCapacity && matchesAvailability;
     });
 
-    // Handler for creating a new group
-    const handleCreateGroup = () => {
-        // Implement navigation or modal for group creation
-        console.log("Create new group clicked");
-        // You might want to navigate to a create group page or open a modal
-    };
-
     // If user is already in a group, show a different view
     if (currentUser?.is_grouped) {
         return (
