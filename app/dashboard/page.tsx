@@ -144,6 +144,21 @@ export default function Dashboard() {
             unsubscribePromise.then((unsubscribe) => unsubscribe());
         };
     }, []); // Run only once on mount with empty dependency array
+    
+    useEffect(() => {
+        const runFetch = async () => {
+            if (!currentUser) return;
+    
+            if (currentUser.is_grouped) {
+                await fetchUserGroupData(currentUser);
+            } else {
+                await fetchRecommendedGroups();
+                setLoadingGroupView(false);
+            }
+        };
+    
+        runFetch();
+    }, [currentUser]); // ✅ Now this does NOT set `currentUser`, avoiding infinite loop
 
     // --- Function to handle requests to joing a group ---
     const handleRequestToJoinGroup = async (groupId: string) => {
@@ -246,12 +261,12 @@ export default function Dashboard() {
 
     // --- Function to Fetch Recommended Groups ---
     const fetchRecommendedGroups = async () => {
-        if (!currentUser) return;
-
+        if (!currentUser || !currentUser.school) return;
+        
         try {
             const groupsQuery = query(
                 collection(db, "groups"),
-                where("school", "==", currentUser.school), 
+                where("school", "==", currentUser.school),
                 limit(6) // Fetch a limited number for recommendations
             );
             const groupsSnapshot = await getDocs(groupsQuery);
@@ -356,7 +371,7 @@ export default function Dashboard() {
             const ungroupedUsersQuery = query(
                 usersCollectionRef,
                 where("is_grouped", "==", false),
-                where("school", "==", userData.school),
+                where("school", "==", groupData.school),
                 limit(20)
             );
             const ungroupedSnapshot = await getDocs(ungroupedUsersQuery);
