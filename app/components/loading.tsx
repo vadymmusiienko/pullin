@@ -20,7 +20,8 @@ const Loading: React.FC<Loading> = ({
     return (
         // Container div allows applying background, centering, etc., via the className prop
         <div
-            className={`flex flex-col items-center justify-center ${className}`}
+            className={`flex flex-col items-center justify-center ${className} bg-gradient-to-br from-teal-400 to-blue-500
+min-h-screen`}
         >
             <svg
                 className={spinnerClasses}

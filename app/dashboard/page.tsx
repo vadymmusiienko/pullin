@@ -320,7 +320,6 @@ export default function Dashboard() {
         return matchesSearch && matchesCapacity && matchesAvailability;
     });
 
-    // --- Placeholder Handlers for Actions ---
     // Implement the actual Firestore logic for these
     const handleInviteUser = async (userIdToInvite: string) => {
         if (!userGroup || !currentUser) {
@@ -591,7 +590,7 @@ export default function Dashboard() {
                                     {groupMembers.map((member) => (
                                         <div
                                             key={member.uid}
-                                            className="flex items-center p-3 bg-gray-50 rounded-lg"
+                                            className="flex items-center p-3 bg-gray-50 rounded-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-300 cursor-pointer"
                                         >
                                             <div className="h-10 w-10 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 font-bold mr-3">
                                                 {member.name
@@ -699,7 +698,7 @@ export default function Dashboard() {
                                         {ungroupedUsers.map((user) => (
                                             <div
                                                 key={user.uid}
-                                                className="border border-gray-200 rounded-lg p-4 flex items-center"
+                                                className="border border-gray-200 rounded-lg p-4 flex items-center hover:shadow-xl transform hover:-translate-y-1 transition duration-300 cursor-pointer"
                                             >
                                                 <div className="h-12 w-12 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 font-bold mr-3">
                                                     {user.name
