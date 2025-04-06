@@ -490,80 +490,88 @@ export default function RequestsPage() {
  };
 
 
- // Render outgoing request item based on type
- const renderOutgoingRequestItem = (req: RequestData) => {
-   // Check fromGroup flag - false means user-to-group
-   if (req.fromGroup !== true) {
-     return (
-       <li key={req.id} className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex items-center justify-between space-x-4">
-         <div>
-           <p className="text-sm font-medium text-gray-900">
-             Request to join <span className='font-semibold'>{req.GroupName}</span>
-           </p>
-           <p className="text-xs text-gray-500">
-             Sent: {req.createdAt?.toDate().toLocaleDateString()}
-           </p>
-         </div>
-         <div className="flex items-center space-x-2">
-           <span className="text-xs font-medium text-yellow-800 bg-yellow-100 px-2.5 py-1 rounded-full flex-shrink-0">
-             Pending
-           </span>
-           <button
-             onClick={() => handleCancelRequest(req)}
-             disabled={processingRequestId === req.id}
-             className={`text-xs font-medium px-2.5 py-1 rounded-full flex-shrink-0 transition-colors
-             ${processingRequestId === req.id
-                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                 : 'bg-red-50 text-red-600 hover:bg-red-100'
-               }`}
-           >
-             {processingRequestId === req.id ? '...' : 'Cancel'}
-           </button>
-         </div>
-       </li>
-     );
-   } else {
-     // Group-to-user request
-     return (
-       <li key={req.id} className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex items-center justify-between space-x-4">
-         <div>
-           <p className="text-xs text-gray-500">
-             Sent: {req.createdAt?.toDate().toLocaleDateString()}
-           </p>
-         </div>
-         <div className="flex items-center space-x-2">
-           <span className="text-xs font-medium text-yellow-800 bg-yellow-100 px-2.5 py-1 rounded-full flex-shrink-0">
-             Pending
-           </span>
-           <button
-             onClick={() => handleCancelRequest(req)}
-             disabled={processingRequestId === req.id}
-             className={`text-xs font-medium px-2.5 py-1 rounded-full flex-shrink-0 transition-colors
-             ${processingRequestId === req.id
-                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                 : 'bg-red-50 text-red-600 hover:bg-red-100'
-               }`}
-           >
-             {processingRequestId === req.id ? '...' : 'Cancel'}
-           </button>
-         </div>
-       </li>
-     );
-   }
- };
+    const renderOutgoingRequestItem = (req: RequestData) => {
+    // Check fromGroup flag - false means user-to-group
+    if (req.fromGroup !== true) {
+        return (
+        <li key={req.id} className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0 sm:space-x-4">
+            <div className="flex items-center space-x-3 flex-grow">
+            <div className="flex-grow">
+                <p className="text-sm font-medium text-gray-900">
+                Request to join <span className='font-semibold'>{req.GroupName}</span>
+                </p>
+                <p className="text-xs text-gray-500">
+                Sent: {req.createdAt?.toDate().toLocaleDateString()}
+                </p>
+            </div>
+            </div>
+            <div className="flex space-x-2 flex-shrink-0 self-end sm:self-center">
+            <span className="px-3 py-1 text-xs font-semibold rounded-md bg-yellow-100 text-yellow-800">
+                Pending
+            </span>
+            <button
+                onClick={() => handleCancelRequest(req)}
+                disabled={processingRequestId === req.id}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                processingRequestId === req.id
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-500'
+                }`}
+            >
+                {processingRequestId === req.id ? '...' : 'Cancel'}
+            </button>
+            </div>
+        </li>
+        );
+    } else {
+        // Group-to-user request
+        return (
+        <li key={req.id} className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0 sm:space-x-4">
+            <div className="flex items-center space-x-3 flex-grow">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                {req.GroupName?.charAt(0) || 'G'}
+            </div>
+            <div className="flex-grow">
+                <p className="text-sm font-medium text-gray-900 leading-snug">
+                Invitation sent to user
+                </p>
+                <p className="text-xs text-gray-500">
+                Sent: {req.createdAt?.toDate().toLocaleDateString()}
+                </p>
+            </div>
+            </div>
+            <div className="flex space-x-2 flex-shrink-0 self-end sm:self-center">
+            <span className="px-3 py-1 text-xs font-semibold rounded-md bg-yellow-100 text-yellow-800">
+                Pending
+            </span>
+            <button
+                onClick={() => handleCancelRequest(req)}
+                disabled={processingRequestId === req.id}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                processingRequestId === req.id
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-500'
+                }`}
+            >
+                {processingRequestId === req.id ? '...' : 'Cancel'}
+            </button>
+            </div>
+        </li>
+        );
+    }
+    };
 
-
- if (authLoading || loading) {
-   return (
-     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-teal-50 to-blue-100">
-       <p className="text-gray-600 text-xl">Loading Requests...</p>
-       <svg className="animate-spin ml-3 h-5 w-5 text-teal-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-       </svg>
-     </div>
-   );
- }
+    if (authLoading || loading) {
+    return (
+        <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-teal-50 to-blue-100">
+        <p className="text-gray-600 text-xl">Loading Requests...</p>
+        <svg className="animate-spin ml-3 h-5 w-5 text-teal-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        </div>
+    );
+    }
 
 
  return (
