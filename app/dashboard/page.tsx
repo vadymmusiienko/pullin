@@ -532,9 +532,6 @@ export default function Dashboard() {
 
                     {/* Group Info Card */}
                     <div className="mb-8 bg-white bg-opacity-95 rounded-xl shadow-lg overflow-hidden">
-                        <div
-                            className={`h-3 bg-${userGroup.colorScheme}-500 w-full`}
-                        ></div>
                         <div className="p-6">
                             <div className="flex flex-col md:flex-row md:justify-between md:items-center">
                                 <div>
