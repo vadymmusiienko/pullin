@@ -16,6 +16,9 @@ type GroupCardProps = {
     groupName: string;
     userCards: UserCard[];
     colorScheme?: "blue" | "green" | "purple" | "orange" | "pink";
+    groupId: string; // Add groupId to pass to the request handler
+    onRequestJoin: (groupId: string) => void; // Add handler prop
+    isPending?: boolean;
 };
 
 const GroupCard: React.FC<GroupCardProps> = ({
@@ -24,6 +27,9 @@ const GroupCard: React.FC<GroupCardProps> = ({
     groupName,
     userCards,
     colorScheme = "blue",
+    groupId,
+    onRequestJoin,
+    isPending = false,
 }) => {
     // Color schemes
     const colorSchemes = {
@@ -56,6 +62,12 @@ const GroupCard: React.FC<GroupCardProps> = ({
 
     const colors = colorSchemes[colorScheme];
 
+    const handleRequestClick = () => {
+        if (onRequestJoin) {
+            onRequestJoin(groupId);
+        }
+    };
+
     return (
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden w-full">
             <div className={`${colors.header} p-4`}>
@@ -83,7 +95,6 @@ const GroupCard: React.FC<GroupCardProps> = ({
                         <div
                             key={user.id}
                             className="flex items-center p-3 bg-gray-50 rounded-xl hover:shadow-md transition-shadow duration-200 cursor-pointer"
-                            //TODO: onClick={handleProfileClick}
                         >
                             {/* Avatar */}
                             <div
@@ -140,11 +151,27 @@ const GroupCard: React.FC<GroupCardProps> = ({
 
                 {/* Request to join button */}
                 <div className="mt-6">
-                    <button
-                        className={`w-full py-3 ${colors.button} text-white font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300 cursor-pointer`}
-                    >
-                        Request to Join Group
-                    </button>
+                    {currentOccupancy < capacity ? (
+                        <button
+                            onClick={() => onRequestJoin(groupId)}
+                            disabled={isPending} // Disable if pending
+                            className={`mt-4 px-4 py-2 w-full rounded-lg text-white transition-colors ${
+                                isPending
+                                    ? "bg-gray-400 cursor-not-allowed" // Gray out when pending
+                                    : "bg-blue-500 hover:bg-blue-600" // Normal blue when not pending
+                            }`}
+                        >
+                            {isPending ? "Request Pending" : "Request to Join"}
+                        </button>
+                    ) : (
+                        // Keep your existing "Group Full" button
+                        <button
+                            disabled
+                            className="mt-4 px-4 py-2 w-full bg-gray-400 text-white rounded-lg cursor-not-allowed"
+                        >
+                            Group Full
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

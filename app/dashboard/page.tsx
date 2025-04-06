@@ -66,6 +66,7 @@ export interface UserData {
     createdAt: Timestamp;
     updatedAt: Timestamp;
     groupId?: string; // Add groupId if user document stores it
+    pendingRequests?: string[]; // Array of group IDs the user has requested to join
 }
 
 export default function Dashboard() {
@@ -144,6 +145,131 @@ export default function Dashboard() {
         };
     }, []); // Run only once on mount with empty dependency array
 
+    // --- Function to handle requests to joing a group ---
+    const handleRequestToJoinGroup = async (groupId: string) => {
+        if (!currentUser) {
+            console.error("User must be logged in to request joining a group");
+            alert("Please log in to request joining a group");
+            return;
+        }
+
+        if (currentUser.is_grouped) {
+            console.error("User is already in a group");
+            alert(
+                "You are already in a group. Leave your current group to join another one."
+            );
+            return;
+        }
+
+        try {
+            // Get the group data to access necessary information
+            const groupDocRef = doc(db, "groups", groupId);
+            const groupDoc = await getDoc(groupDocRef);
+
+            if (!groupDoc.exists()) {
+                console.error("Group not found");
+                alert("This group no longer exists");
+                return;
+            }
+
+            const groupData = groupDoc.data();
+
+            // Check if group is already full
+            if (
+                groupData.members &&
+                groupData.members.length >= groupData.capacity
+            ) {
+                console.error("Group is already full");
+                alert("This group is already at full capacity");
+                return;
+            }
+
+            // Check if user already has a pending request to this group
+            const requestsCollection = collection(db, "requests");
+            const existingRequestsQuery = query(
+                requestsCollection,
+                where("senderUserId", "==", currentUser.uid),
+                where("recipientGroupId", "==", groupId),
+                where("status", "==", "pending")
+            );
+
+            const existingRequestsSnapshot = await getDocs(
+                existingRequestsQuery
+            );
+
+            if (!existingRequestsSnapshot.empty) {
+                console.warn("A pending request already exists");
+                alert("You already have a pending request to join this group");
+                return;
+            }
+
+            // Create a batch to ensure operations are atomic
+            const batch = writeBatch(db);
+
+            // Prepare the request document data
+            const requestData = {
+                senderUserId: currentUser.uid,
+                senderName: currentUser.name,
+                senderEmail: currentUser.email,
+                senderYear: currentUser.graduationYear,
+                recipientGroupId: groupId,
+                recipientGroupName: groupData.groupName,
+                recipientGroupLeaderId: groupData.creatorId,
+                status: "pending",
+                createdAt: serverTimestamp(),
+                type: "join_request",
+            };
+
+            // Create a new request document
+            const newRequestRef = doc(collection(db, "requests"));
+            batch.set(newRequestRef, requestData);
+
+            // Update the group's pendingRequests array if it exists
+            if (!groupData.pendingRequests) {
+                batch.update(groupDocRef, {
+                    pendingRequests: [currentUser.uid],
+                });
+            } else {
+                batch.update(groupDocRef, {
+                    pendingRequests: arrayUnion(currentUser.uid),
+                });
+            }
+
+            // Update the user's pendingRequests array with the groupId they requested to join
+            const userDocRef = doc(db, "users", currentUser.uid);
+            if (!currentUser.pendingRequests) {
+                batch.update(userDocRef, {
+                    pendingRequests: [groupId],
+                });
+            } else {
+                batch.update(userDocRef, {
+                    pendingRequests: arrayUnion(groupId),
+                });
+            }
+
+            // Commit all operations
+            await batch.commit();
+
+            console.log(`Request to join group ${groupId} sent successfully`);
+            alert("Your request to join the group has been sent!");
+
+            // Update current user state to include the new pending request
+            setCurrentUser({
+                ...currentUser,
+                pendingRequests: [
+                    ...(currentUser.pendingRequests || []),
+                    groupId,
+                ],
+            });
+
+            // Update the UI to reflect changes
+            await fetchRecommendedGroups();
+        } catch (error) {
+            console.error("Error sending join request:", error);
+            alert("Failed to send join request. Please try again.");
+        }
+    };
+
     // --- Function to Fetch Recommended Groups ---
     const fetchRecommendedGroups = async () => {
         try {
@@ -181,6 +307,8 @@ export default function Dashboard() {
                         creatorId: groupData.creatorId,
                         members: groupData.members || [], // Keep original member IDs
                         description: groupData.description,
+                        pendingUsers: groupData.pendingUsers || [],
+                        // Include pendingRequests if available
                     };
                     return resultData;
                 }
@@ -334,6 +462,11 @@ export default function Dashboard() {
 
         return matchesSearch && matchesCapacity && matchesAvailability;
     });
+
+    // Check if a group is in the user's pending requests
+    const isGroupRequestPending = (groupId: string) => {
+        return currentUser?.pendingRequests?.includes(groupId) || false;
+    };
 
     const handleInviteUser = async (userIdToInvite: string) => {
         if (!userGroup || !currentUser) {
@@ -942,17 +1075,16 @@ export default function Dashboard() {
                                     {" "}
                                     {/* Ensure flex container takes full height */}
                                     <GroupCard
-                                        // Pass necessary props from GroupData to GroupCard
-                                        // Adjust GroupCard props if they differ from GroupData fields
                                         capacity={group.capacity}
                                         currentOccupancy={
                                             group.currentOccupancy
                                         }
                                         groupName={group.groupName}
-                                        userCards={group.userCards} // Pass the simplified user cards
+                                        userCards={group.userCards}
                                         colorScheme={group.colorScheme}
-                                        //groupId={group.id} // Pass groupId if needed by GroupCard for actions
-                                        // Add other props GroupCard might need
+                                        groupId={group.id} // Pass the group ID
+                                        onRequestJoin={handleRequestToJoinGroup} // Pass the handler
+                                        isPending={isGroupRequestPending(group.id)}
                                     />
                                 </div>
                             ))}
