@@ -1,4 +1,3 @@
-// src/app/create_group/page.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -45,36 +44,49 @@ export default function CreateGroupPage() {
 
     setIsLoading(true);
 
-    const newGroupData = {
+    // Data for the initial group creation (without groupId)
+    const initialGroupData = {
       groupName: groupName.trim(),
       description: description.trim(),
       capacity: numericCapacity,
       creatorId: user.uid,
-      members: [user.uid],
+      members: [user.uid], // Start with the creator as the first member
       createdAt: serverTimestamp(),
+      // groupId field will be added in the update step below
     };
 
     try {
+      // 1. Create the group document and get its reference
       const groupsCollectionRef = collection(db, 'groups');
-      const newDocRef = await addDoc(groupsCollectionRef, newGroupData);
-      console.log("Group created (client-side) with ID: ", newDocRef.id);
+      const newDocRef = await addDoc(groupsCollectionRef, initialGroupData);
+      const generatedGroupId = newDocRef.id; // <-- Get the auto-generated ID
 
+      console.log("Group document created with ID: ", generatedGroupId);
+
+      // 2. Update the newly created group document to add the groupId field
+      await updateDoc(newDocRef, {
+        groupId: generatedGroupId
+      });
+      console.log("Group document updated with groupId field.");
+
+      // 3. Update the user's document
       const userDocRef = doc(db, 'users', user.uid);
       await updateDoc(userDocRef, {
           group_leader: true,
           is_grouped: true,
+          groupId: generatedGroupId, // Optionally store the group ID on the user doc too
           updatedAt: serverTimestamp()
       });
-      console.log("User document updated with group_leader: true");
+      console.log("User document updated successfully.");
 
-
-      alert('Group created successfully! Redirecting to dashboard...'); // Updated alert slightly
-      router.push('/dashboard'); // <--- CHANGE: Redirect to dashboard
+      alert('Group created successfully! Redirecting to dashboard...');
+      router.push('/dashboard');
 
     } catch (err: unknown) {
-        console.error("Error creating group or updating user:", err);
+        // Log the specific step where the error might occur if possible
+        console.error("Error during group creation/update process:", err);
         if (err instanceof Error) {
-            setError(`Operation failed: ${err.message}. Check Firestore rules?`);
+            setError(`Operation failed: ${err.message}. Check Firestore rules or network?`);
         } else {
             setError(`An unexpected error occurred. Please try again.`);
         }
@@ -82,6 +94,8 @@ export default function CreateGroupPage() {
       setIsLoading(false);
     }
   };
+  // --- End of corrected function ---
+
 
   if (authLoading) return (
       <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-teal-400 to-blue-500">
@@ -142,7 +156,7 @@ export default function CreateGroupPage() {
                   onChange={(e) => setCapacity(e.target.value)}
                   required
                   min="1"
-                  max="20"
+                  max="20" // You might want to adjust max capacity
                   step="1"
                   className="w-24 py-2 px-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition duration-150 ease-in-out sm:text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 />
