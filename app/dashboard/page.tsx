@@ -10,8 +10,10 @@ import {
     getDoc,
     Timestamp,
     where,
-    // Add necessary functions for deleting/updating later
-    // writeBatch, deleteDoc, updateDoc, arrayRemove, arrayUnion
+    writeBatch,
+    //deleteDoc,
+    arrayRemove,
+    deleteField,
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase/firebaseConfig";
 import GroupCard from "./components/GroupCard";
@@ -365,62 +367,91 @@ export default function Dashboard() {
         // }
     };
 
-    const handleDeleteGroup = async (groupId: string) => {
-        if (
-            !currentUser ||
-            !currentUser.group_leader ||
-            !userGroup ||
-            userGroup.id !== groupId
-        ) {
+    const handleLeaveGroup = async (groupId: string) => {
+        if (!currentUser || !userGroup || userGroup.id !== groupId) {
             console.error("Unauthorized or incorrect group ID for deletion.");
-            alert("Error: You are not authorized to delete this group.");
+            alert("Error: You are not authorized to leave this group.");
             return;
         }
+
         if (
             !confirm(
-                `Are you sure you want to permanently delete the group "${userGroup.groupName}"? This cannot be undone.`
+                `Are you sure you want to leave the group "${userGroup.groupName}"?`
             )
         ) {
             return;
         }
 
-        console.log(`Deleting group ${groupId}`);
-        alert(
-            `TODO: Implement Firestore logic to delete group ${groupId} and update members.`
-        );
-        // --- Firestore Logic (Example using batch write) ---
-        // const batch = writeBatch(db);
-        // const groupRef = doc(db, "groups", groupId);
+        try {
+            const batch = writeBatch(db);
+            const groupRef = doc(db, "groups", groupId);
+            const userRef = doc(db, "users", currentUser.uid);
 
-        // // Update all members to be ungrouped
-        // userGroup.members.forEach(memberId => {
-        //     const userRef = doc(db, "users", memberId);
-        //     batch.update(userRef, {
-        //         is_grouped: false,
-        //         groupId: deleteField(), // Remove groupId field
-        //         group_leader: false // Ensure leader status is also removed
-        //     });
-        // });
+            // Update user document to mark as ungrouped
+            batch.update(userRef, {
+                is_grouped: false,
+                group_leader: false,
+                groupId: deleteField(), // Remove the groupId field
+            });
 
-        // // Delete the group document
-        // batch.delete(groupRef);
+            // Remove user from group members array
+            batch.update(groupRef, {
+                members: arrayRemove(currentUser.uid),
+            });
 
-        // try {
-        //     await batch.commit();
-        //     console.log("Group deleted successfully!");
-        //     // Reset state or navigate away
-        //     setUserGroup(null);
-        //     setUngroupedUsers([]);
-        //     setGroupMembers([]);
-        //     // Force a state update on currentUser to reflect is_grouped = false
-        //     setCurrentUser(prev => prev ? { ...prev, is_grouped: false, group_leader: false, groupId: undefined } : null);
-        //     // Optionally fetch recommended groups now
-        //     fetchRecommendedGroups();
+            // If user is the group leader and there are other members, assign new leader
+            if (currentUser.group_leader && userGroup.members.length > 1) {
+                // Find another member that's not the current user
+                const otherMembers = userGroup.members.filter(
+                    (memberId) => memberId !== currentUser.uid
+                );
+                // Select random member as new leader
+                const newLeaderId =
+                    otherMembers[
+                        Math.floor(Math.random() * otherMembers.length)
+                    ];
+                const newLeaderRef = doc(db, "users", newLeaderId);
 
-        // } catch (error) {
-        //     console.error("Error deleting group:", error);
-        //     alert("Failed to delete group. Please try again.");
-        // }
+                // Update group document with new creator
+                batch.update(groupRef, {
+                    creatorId: newLeaderId,
+                });
+
+                // Update the new leader's user document
+                batch.update(newLeaderRef, {
+                    group_leader: true,
+                });
+
+                console.log(`Assigned new leader: ${newLeaderId}`);
+            }
+            // If this was the last member, delete the group
+            else if (userGroup.members.length <= 1) {
+                // Delete the group document instead of updating it
+                batch.delete(groupRef);
+                console.log(`Deleted empty group: ${groupId}`);
+            }
+
+            // Commit all the batched writes
+            await batch.commit();
+
+            console.log(`Successfully left group ${groupId}`);
+
+            // Refresh the UI - we can use the existing fetchRecommendedGroups since the user is now ungrouped
+            setUserGroup(null);
+            setGroupMembers([]);
+            await fetchRecommendedGroups();
+
+            // Update the current user data to reflect the changes
+            setCurrentUser({
+                ...currentUser,
+                is_grouped: false,
+                group_leader: false,
+                groupId: undefined,
+            });
+        } catch (error) {
+            console.error("Error leaving group:", error);
+            alert("Failed to leave the group. Please try again.");
+        }
     };
 
     const handleRemoveMember = async (memberIdToRemove: string) => {
@@ -555,11 +586,11 @@ export default function Dashboard() {
                                     <div className="mt-4 md:mt-0">
                                         <button
                                             onClick={() =>
-                                                handleDeleteGroup(userGroup.id)
+                                                handleLeaveGroup(userGroup.id)
                                             }
                                             className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow transition duration-200"
                                         >
-                                            Delete Group
+                                            Leave Group
                                         </button>
                                     </div>
                                 )}
