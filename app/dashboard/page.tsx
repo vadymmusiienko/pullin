@@ -573,6 +573,7 @@ export default function Dashboard() {
         }
 
         try {
+            setLoading(true);
             const batch = writeBatch(db);
             const groupRef = doc(db, "groups", groupId);
             const userRef = doc(db, "users", currentUser.uid);
@@ -611,20 +612,15 @@ export default function Dashboard() {
                 batch.update(newLeaderRef, {
                     group_leader: true,
                 });
-
-                console.log(`Assigned new leader: ${newLeaderId}`);
             }
             // If this was the last member, delete the group
             else if (userGroup.members.length <= 1) {
                 // Delete the group document instead of updating it
                 batch.delete(groupRef);
-                console.log(`Deleted empty group: ${groupId}`);
             }
 
             // Commit all the batched writes
             await batch.commit();
-
-            console.log(`Successfully left group ${groupId}`);
 
             // Refresh the UI - we can use the existing fetchRecommendedGroups since the user is now ungrouped
             setUserGroup(null);
@@ -641,6 +637,8 @@ export default function Dashboard() {
         } catch (error) {
             console.error("Error leaving group:", error);
             alert("Failed to leave the group. Please try again.");
+        } finally {
+            setLoading(false);
         }
     };
 
