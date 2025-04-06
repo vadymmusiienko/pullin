@@ -28,7 +28,6 @@ interface UserProfileData {
  graduationYear: number;
  interests: string[];
  registrationTime: string;
- pfpUrl: string;
  instagramHandle?: string;
  email?: string;
  school?: string;
@@ -47,7 +46,6 @@ export default function EditProfilePage() {
  const [graduationYear, setGraduationYear] = useState<string>(''); // Keep as string for input control
  const [interestsString, setInterestsString] = useState('');
  const [registrationTime, setRegistrationTime] = useState('');
- const [pfpUrl, setPfpUrl] = useState('');
  const [instagramHandle, setInstagramHandle] = useState('');
 
 
@@ -80,7 +78,6 @@ export default function EditProfilePage() {
        setGraduationYear(data.graduationYear ? data.graduationYear.toString() : '');
        setInterestsString((data.interests || []).join(', '));
        setRegistrationTime(data.registrationTime || '');
-       setPfpUrl(data.pfpUrl || '');
        setInstagramHandle(data.instagramHandle || '');
        setEmail(data.email || '');
        setSchool(data.school || '');
@@ -146,13 +143,6 @@ export default function EditProfilePage() {
        setIsUpdating(false);
        return;
    }
-   try {
-       if (pfpUrl.trim() !== '') new URL(pfpUrl);
-   } catch {
-       setError('Please enter a valid URL for the profile picture or leave it empty.');
-       setIsUpdating(false);
-       return;
-   }
    const cleanedInstagramHandle = instagramHandle.trim().replace(/^@/, '');
    if (!isValidInstagramHandle(cleanedInstagramHandle)) {
         setError('Please enter a valid Instagram username (letters, numbers, ., _ , max 30 chars) or leave it empty.');
@@ -176,7 +166,6 @@ export default function EditProfilePage() {
      graduationYear: numericGradYear,
      interests: interestsArray,
      registrationTime: registrationTime.trim(),
-     pfpUrl: pfpUrl.trim(),
      instagramHandle: cleanedInstagramHandle,
      updatedAt: serverTimestamp(),
    };
@@ -291,16 +280,6 @@ if (authLoading || isFetching) {
                className="w-full py-2 px-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition duration-150 ease-in-out sm:text-sm" />
               <p className="text-xs text-gray-500 mt-1">Separate interests with commas.</p>
            </div>
-
-
-           {/* Profile Picture URL */}
-           <div>
-             <label htmlFor="pfpUrl" className="block text-sm font-medium text-gray-700 mb-1">Profile Picture URL</label>
-             <input type="url" id="pfpUrl" name="pfpUrl" value={pfpUrl} onChange={(e) => setPfpUrl(e.target.value)} placeholder="https://example.com/image.png"
-               className="w-full py-2 px-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition duration-150 ease-in-out sm:text-sm" />
-                <p className="text-xs text-gray-500 mt-1">Enter the web address (URL) of your profile picture.</p>
-           </div>
-
 
            {/* --- Submission & Feedback --- */}
            <div className="pt-5">

@@ -406,25 +406,45 @@ export default function RequestsPage() {
       // For user-to-group requests (user requesting to join a group)
       if (!request.fromGroup && request.GroupId && request.userid) {
         const groupRef = doc(db, 'groups', request.GroupId);
-        // Make sure we're using the correct user ID (the one from the request)
+        const userRef = doc(db, 'users', request.userid);
+        
+        // Remove the requesting user from group's pendingUsers
         batch.update(groupRef, {
           pendingUsers: arrayRemove(request.userid),
           updatedAt: serverTimestamp()
         });
+        
+        // Remove the group ID from user's pendingRequests
+        batch.update(userRef, {
+          pendingRequests: arrayRemove(request.GroupId),
+          updatedAt: serverTimestamp()
+        });
+        
         console.log(`Removing user ${request.userid} from pending users in group ${request.GroupId}`);
+        console.log(`Removing group ${request.GroupId} from pending requests for user ${request.userid}`);
       }
       
       // For group-to-user requests (group inviting a user to join)
       if (request.fromGroup && request.GroupId) {
         const groupRef = doc(db, 'groups', request.GroupId);
+        const userRef = doc(db, 'users', user.uid);
+        
         // For group-to-user requests, the current user is the one being invited
         batch.update(groupRef, {
           pendingUsers: arrayRemove(user.uid),
           updatedAt: serverTimestamp()
         });
+        
+        // Remove the group ID from user's pendingRequests
+        batch.update(userRef, {
+          pendingRequests: arrayRemove(request.GroupId),
+          updatedAt: serverTimestamp()
+        });
+        
         console.log(`Removing current user ${user.uid} from pending users in group ${request.GroupId}`);
+        console.log(`Removing group ${request.GroupId} from pending requests for user ${user.uid}`);
       }
-  
+    
       await batch.commit();
       console.log(`Request ${request.id} declined successfully.`);
     } catch (err: unknown) {
@@ -437,47 +457,68 @@ export default function RequestsPage() {
       setProcessingRequestId(null);
     }
   };
-  
+
   // Handle cancelling an outgoing request
   const handleCancelRequest = async (request: RequestData) => {
   if (processingRequestId || !user) return;
   setProcessingRequestId(request.id);
   setError(null);
-  
+
   const requestRef = doc(db, 'requests', request.id);
   const batch = writeBatch(db);
 
   try {
     // Delete the request document
     batch.delete(requestRef);
-    
+
     // For user-to-group requests (user requesting to join a group)
     if (!request.fromGroup && request.GroupId) {
       const groupRef = doc(db, 'groups', request.GroupId);
-      // Remove the requesting user (request.userid) from pendingUsers
+      const userRef = doc(db, 'users', user.uid);
+
+      // Remove user from group's pendingUsers
       batch.update(groupRef, {
-        pendingUsers: arrayRemove(user.uid), // The current user is the one who sent the request
-        updatedAt: serverTimestamp()
+        pendingUsers: arrayRemove(user.uid),
+        updatedAt: serverTimestamp(),
       });
+
+      // Remove group from user's pendingRequests
+      batch.update(userRef, {
+        pendingRequests: arrayRemove(request.GroupId),
+        updatedAt: serverTimestamp(),
+      });
+
+      console.log(`Removed group ${request.GroupId} from user's pendingRequests`);
     }
-    
+
     // For group-to-user requests (group inviting a user to join)
     if (request.fromGroup && request.GroupId && request.userid) {
       const groupRef = doc(db, 'groups', request.GroupId);
-      // Remove the invited user (request.userid) from pendingUsers
+      const userRef = doc(db, 'users', request.userid);
+
+      // Remove invited user from group's pendingUsers
       batch.update(groupRef, {
         pendingUsers: arrayRemove(request.userid),
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       });
+
+      // Remove group from user's pendingRequests
+      batch.update(userRef, {
+        pendingRequests: arrayRemove(request.GroupId),
+        updatedAt: serverTimestamp(),
+      });
+
+      console.log(`Removed group ${request.GroupId} from user's pendingRequests (group-to-user)`);
     }
 
     await batch.commit();
-    console.log(`Request ${request.id} cancelled and deleted successfully.`);
+    console.log(`Request ${request.id} cancelled and cleaned up successfully.`);
   } catch (err: unknown) {
     console.error("Error cancelling request:", err);
-    setError(err instanceof Error ?
-      `Failed to cancel request: ${err.message}` :
-      "An unexpected error occurred while cancelling the request."
+    setError(
+      err instanceof Error
+        ? `Failed to cancel request: ${err.message}`
+        : "An unexpected error occurred while cancelling the request."
     );
   } finally {
     setProcessingRequestId(null);
