@@ -12,7 +12,7 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase/firebaseConfig"; // Adjust the import path as needed
 import GroupCard from "./components/GroupCard";
-import Link from 'next/link';
+import Link from "next/link";
 
 // Define type for color schemes to match the expected values
 type ColorScheme = "blue" | "green" | "purple" | "orange" | "pink";
@@ -126,7 +126,7 @@ export default function Dashboard() {
                             id: groupDoc.id,
                             capacity: groupData.capacity,
                             currentOccupancy: (groupData.members || []).length,
-                            groupName: groupData.group_name,
+                            groupName: groupData.groupName,
                             colorScheme: getColorScheme(groupDoc.id),
                             userCards,
                         });
@@ -297,12 +297,6 @@ export default function Dashboard() {
                             Try adjusting your search criteria or create a new
                             group.
                         </p>
-                        <Link
-                            href={createGroupPath}
-                            className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300"
-                        >
-                            Create New Group
-                        </Link>
                     </div>
                 )}
 
@@ -311,7 +305,6 @@ export default function Dashboard() {
                     <Link
                         href={createGroupPath}
                         className="px-8 py-4 bg-white text-blue-600 font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-300"
-
                     >
                         + Create New Group
                     </Link>
