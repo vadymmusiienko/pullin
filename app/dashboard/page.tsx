@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import UserDetailsModal from "./components/UserDetailsModal";
 import {
     collection,
     query,
@@ -91,6 +92,9 @@ export default function Dashboard() {
     const [availabilityFilter, setAvailabilityFilter] =
         useState("Any Availability");
 
+    const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+    const [showUserDetailsModal, setShowUserDetailsModal] = useState(false);
+
     // --- Fetch Current User and Initial Data ---
     useEffect(() => {
         const fetchUserData = async () => {
@@ -166,6 +170,19 @@ export default function Dashboard() {
 
         runFetch();
     }, [currentUser]);
+
+    // --- Function to handle user click on profile card ---
+    // Add a function to handle user clicks
+    const handleUserClick = (user: UserData) => {
+        setSelectedUser(user);
+        setShowUserDetailsModal(true);
+    };
+
+    // Add a function to close the modal
+    const closeUserDetailsModal = () => {
+        setShowUserDetailsModal(false);
+        setSelectedUser(null);
+    };
 
     // --- Function to handle requests to joing a group ---
     const handleRequestToJoinGroup = async (groupId: string) => {
@@ -977,6 +994,9 @@ export default function Dashboard() {
                                         {filteredUngroupedUsers.map((user) => (
                                             <div
                                                 key={user.uid}
+                                                onClick={() =>
+                                                    handleUserClick(user)
+                                                }
                                                 className="border border-gray-200 rounded-lg p-4 flex items-center hover:shadow-xl transform hover:-translate-y-1 transition duration-300 cursor-pointer"
                                             >
                                                 <div className="h-12 w-12 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 font-bold mr-3">
@@ -1041,6 +1061,12 @@ export default function Dashboard() {
                                                 </button>
                                             </div>
                                         ))}
+                                        {/* Add the modal to your JSX */}
+                                        <UserDetailsModal
+                                            user={selectedUser}
+                                            isOpen={showUserDetailsModal}
+                                            onClose={closeUserDetailsModal}
+                                        />
                                     </div>
 
                                     {/* Add pagination controls if needed */}
