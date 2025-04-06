@@ -80,6 +80,7 @@ export default function Dashboard() {
     const [loadingGroupView, setLoadingGroupView] = useState(true); // Separate loading for grouped view
     const [currentUser, setCurrentUser] = useState<UserData | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [userSearchTerm, setUserSearchTerm] = useState(""); // New state for user search
     const [capacityFilter, setCapacityFilter] = useState("All Capacities");
     const [availabilityFilter, setAvailabilityFilter] =
         useState("Any Availability");
@@ -143,12 +144,12 @@ export default function Dashboard() {
         return () => {
             unsubscribePromise.then((unsubscribe) => unsubscribe());
         };
-    }, []); // Run only once on mount with empty dependency array
-    
+    }, []);
+
     useEffect(() => {
         const runFetch = async () => {
             if (!currentUser) return;
-    
+
             if (currentUser.is_grouped) {
                 await fetchUserGroupData(currentUser);
             } else {
@@ -156,9 +157,9 @@ export default function Dashboard() {
                 setLoadingGroupView(false);
             }
         };
-    
+
         runFetch();
-    }, [currentUser]); // ✅ Now this does NOT set `currentUser`, avoiding infinite loop
+    }, [currentUser]);
 
     // --- Function to handle requests to joing a group ---
     const handleRequestToJoinGroup = async (groupId: string) => {
@@ -263,7 +264,7 @@ export default function Dashboard() {
     // --- Function to Fetch Recommended Groups ---
     const fetchRecommendedGroups = async () => {
         if (!currentUser || !currentUser.school) return;
-        
+
         try {
             const groupsQuery = query(
                 collection(db, "groups"),
@@ -433,7 +434,7 @@ export default function Dashboard() {
 
     // Filter recommended groups based on search and filters
     const filteredRecommendedGroups = recommendedGroups.filter((group) => {
-        // Search term filter
+        // Search term filter - convert to lowercase for case-insensitive comparison
         const matchesSearch =
             searchTerm === "" ||
             group.groupName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -455,6 +456,27 @@ export default function Dashboard() {
         }
 
         return matchesSearch && matchesCapacity && matchesAvailability;
+    });
+
+    // Filter ungrouped users based on the search term
+    const filteredUngroupedUsers = ungroupedUsers.filter((user) => {
+        if (userSearchTerm === "") return true;
+
+        const searchTermLower = userSearchTerm.toLowerCase();
+        const fullName = user.name.toLowerCase();
+
+        // Check for match in full name
+        if (fullName.includes(searchTermLower)) return true;
+
+        // Check for match in last name (if there's a space in the name)
+        const nameParts = fullName.split(" ");
+        if (nameParts.length > 1) {
+            // Get last name (everything after the first space)
+            const lastName = fullName.substring(fullName.indexOf(" ") + 1);
+            if (lastName.includes(searchTermLower)) return true;
+        }
+
+        return false;
     });
 
     // Check if a group is in the user's pending requests
@@ -900,7 +922,12 @@ export default function Dashboard() {
                                             type="text"
                                             placeholder="Search for users to invite..."
                                             className="w-full py-2 px-4 bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                                            // TODO: Add search state and handler
+                                            value={userSearchTerm}
+                                            onChange={(e) =>
+                                                setUserSearchTerm(
+                                                    e.target.value
+                                                )
+                                            }
                                         />
                                     </div>
                                 </div>
@@ -926,7 +953,7 @@ export default function Dashboard() {
                                 <div>
                                     {/* Ungrouped Users Grid */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {ungroupedUsers.map((user) => (
+                                        {filteredUngroupedUsers.map((user) => (
                                             <div
                                                 key={user.uid}
                                                 className="border border-gray-200 rounded-lg p-4 flex items-center hover:shadow-xl transform hover:-translate-y-1 transition duration-300 cursor-pointer"
