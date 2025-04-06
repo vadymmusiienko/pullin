@@ -11,11 +11,11 @@ import {
     where,
     onSnapshot,
     doc,
+    updateDoc,
     serverTimestamp,
     Timestamp,
     runTransaction,
     arrayUnion,
-    deleteDoc,
 } from 'firebase/firestore';
 
 // Updated interface to support both types of requests with fromGroup field
@@ -357,9 +357,8 @@ export default function RequestsPage() {
         setError(null);
         const requestRef = doc(db, 'requests', request.id);
         try {
-            // Delete the request document instead of updating its status
-            await deleteDoc(requestRef);
-            console.log(`Request ${request.id} declined and deleted successfully.`);
+            await updateDoc(requestRef, { status: "declined", updatedAt: serverTimestamp() });
+            console.log(`Request ${request.id} declined successfully.`);
         } catch (err: unknown) {
             console.error("Error declining request:", err);
             setError(err instanceof Error ? 
@@ -378,9 +377,8 @@ export default function RequestsPage() {
         setError(null);
         const requestRef = doc(db, 'requests', request.id);
         try {
-            // Delete the request document instead of updating its status
-            await deleteDoc(requestRef);
-            console.log(`Request ${request.id} cancelled and deleted successfully.`);
+            await updateDoc(requestRef, { status: "cancelled", updatedAt: serverTimestamp() });
+            console.log(`Request ${request.id} cancelled successfully.`);
         } catch (err: unknown) {
             console.error("Error cancelling request:", err);
             setError(err instanceof Error ? 
