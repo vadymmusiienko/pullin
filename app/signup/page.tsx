@@ -6,6 +6,7 @@ import { auth, db } from "@/lib/firebase/firebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { Combobox, Transition } from "@headlessui/react";
+import Loading from "../components/loading";
 
 // --- College Data Types ---
 interface College {
@@ -59,7 +60,7 @@ export default function SignUpPage() {
 
     // Add styles to fix scrolling and combobox focus styles
     useEffect(() => {
-        const styleElement = document.createElement('style');
+        const styleElement = document.createElement("style");
         styleElement.innerHTML = `
             .combobox-options-container {
                 max-height: 200px;
@@ -176,9 +177,9 @@ export default function SignUpPage() {
                 graduationYear: parsedGradYear,
                 registrationTime: registrationTime,
                 name: `${firstName} ${lastName}`,
-                group_leader:false,
+                group_leader: false,
                 pfpUrl: "",
-                is_grouped:false,
+                is_grouped: false,
                 bio: "",
                 interests: [],
                 createdAt: serverTimestamp(),
@@ -212,9 +213,9 @@ export default function SignUpPage() {
     return (
         // Main container needs to allow scrolling if content overflows viewport
         <main className="min-h-screen flex justify-center bg-gradient-to-br from-teal-400 to-blue-500 p-6 overflow-y-auto">
-             {/* Added overflow-y-auto here to ensure the main area scrolls if needed */}
+            {/* Added overflow-y-auto here to ensure the main area scrolls if needed */}
             <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl my-auto">
-            {/* Added my-auto to help center vertically if content is short */}
+                {/* Added my-auto to help center vertically if content is short */}
                 <div className="p-8">
                     <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent mb-6">
                         Create Your Pull-In Account
@@ -330,7 +331,25 @@ export default function SignUpPage() {
                                         />
                                         <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
                                             {/* Chevron Icon */}
-                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 text-gray-400" aria-hidden="true"> <path fillRule="evenodd" d="M10 3a.75.75 0 0 1 .55.24l3.25 3.5a.75.75 0 1 1-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 0 1-1.1-1.02l3.25-3.5A.75.75 0 0 1 10 3Z" clipRule="evenodd" /> <path fillRule="evenodd" d="M10 17a.75.75 0 0 1-.55-.24l-3.25-3.5a.75.75 0 1 1 1.1-1.02L10 15.148l2.7-2.91a.75.75 0 0 1 1.1 1.02l-3.25 3.5A.75.75 0 0 1 10 17Z" clipRule="evenodd" /> </svg>
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                viewBox="0 0 20 20"
+                                                fill="currentColor"
+                                                className="h-5 w-5 text-gray-400"
+                                                aria-hidden="true"
+                                            >
+                                                {" "}
+                                                <path
+                                                    fillRule="evenodd"
+                                                    d="M10 3a.75.75 0 0 1 .55.24l3.25 3.5a.75.75 0 1 1-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 0 1-1.1-1.02l3.25-3.5A.75.75 0 0 1 10 3Z"
+                                                    clipRule="evenodd"
+                                                />{" "}
+                                                <path
+                                                    fillRule="evenodd"
+                                                    d="M10 17a.75.75 0 0 1-.55-.24l-3.25-3.5a.75.75 0 1 1 1.1-1.02L10 15.148l2.7-2.91a.75.75 0 0 1 1.1 1.02l-3.25 3.5A.75.75 0 0 1 10 17Z"
+                                                    clipRule="evenodd"
+                                                />{" "}
+                                            </svg>
                                         </Combobox.Button>
                                     </div>
                                     <Transition
@@ -387,8 +406,21 @@ export default function SignUpPage() {
                                                                                     : "text-teal-500"
                                                                             }`}
                                                                         >
-                                                                           {/* Check Icon */}
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5" aria-hidden="true"> <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" /> </svg>
+                                                                            {/* Check Icon */}
+                                                                            <svg
+                                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                                viewBox="0 0 20 20"
+                                                                                fill="currentColor"
+                                                                                className="h-5 w-5"
+                                                                                aria-hidden="true"
+                                                                            >
+                                                                                {" "}
+                                                                                <path
+                                                                                    fillRule="evenodd"
+                                                                                    d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                                                                                    clipRule="evenodd"
+                                                                                />{" "}
+                                                                            </svg>
                                                                         </span>
                                                                     ) : null}
                                                                 </>
@@ -403,7 +435,7 @@ export default function SignUpPage() {
                             </Combobox>
                         </div>
 
-                         {/* --- Form Inputs (continued, remain the same) --- */}
+                        {/* --- Form Inputs (continued, remain the same) --- */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             {/* Graduation Year Input */}
                             <div>
@@ -465,11 +497,7 @@ export default function SignUpPage() {
                             className="w-full px-8 py-3.5 mt-2 bg-gradient-to-r from-teal-400 to-blue-500 text-white font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                         >
                             {isLoading ? (
-                                <span className="flex items-center justify-center">
-                                    {/* Loading Spinner SVG */}
-                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"> <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle> <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg>
-                                    Creating your account...
-                                </span>
+                                <Loading loadingText="Creating Account..." />
                             ) : (
                                 "Create Account"
                             )}
