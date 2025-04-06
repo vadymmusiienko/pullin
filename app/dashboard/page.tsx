@@ -15,7 +15,7 @@ import {
     arrayRemove,
     deleteField,
     serverTimestamp,
-    addDoc,
+    arrayUnion,
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase/firebaseConfig";
 import GroupCard from "./components/GroupCard";
@@ -46,6 +46,7 @@ export interface GroupData {
     creatorId: string; // Add creatorId if needed for leader check
     members: string[]; // Keep the list of member IDs
     description?: string; // Optional description
+    pendingUsers?: string[]; // Optional pending users
     // Add other group fields if they exist
 }
 
@@ -238,22 +239,34 @@ export default function Dashboard() {
                 creatorId: groupData.creatorId,
                 members: groupData.members || [],
                 description: groupData.description,
+                pendingUsers: groupData.pendingUsers || [], // Make sure to include pendingUsers
             };
 
             setUserGroup(userGroupData);
             setGroupMembers(memberDetails); // Keep storing full data separately if needed
 
             const usersCollectionRef = collection(db, "users"); // Get reference to 'users' collection
+
+            // First, get all ungrouped users
             const ungroupedUsersQuery = query(
-                usersCollectionRef, // 1. REQUIRED: The collection to query
-                where("is_grouped", "==", false), // 2. Constraint: Filter for ungrouped users
-                limit(20) // 3. Constraint: Limit results (good practice)
+                usersCollectionRef,
+                where("is_grouped", "==", false),
+                limit(20)
             );
             const ungroupedSnapshot = await getDocs(ungroupedUsersQuery);
+
+            // Convert to UserData array
             const ungroupedUsersData = ungroupedSnapshot.docs.map(
                 (doc) => ({ uid: doc.id, ...doc.data() } as UserData)
             );
-            setUngroupedUsers(ungroupedUsersData); // Set state with fetched users
+
+            // Filter out users who have pending invitations
+            const pendingUserIds = groupData.pendingUsers || [];
+            const filteredUngroupedUsers = ungroupedUsersData.filter(
+                (user) => !pendingUserIds.includes(user.uid)
+            );
+
+            setUngroupedUsers(filteredUngroupedUsers); // Set state with filtered users
         } catch (error) {
             console.error("Error fetching group view data:", error);
             // ... reset states ...
@@ -322,11 +335,17 @@ export default function Dashboard() {
         return matchesSearch && matchesCapacity && matchesAvailability;
     });
 
-    // Implement the actual Firestore logic for these
     const handleInviteUser = async (userIdToInvite: string) => {
         if (!userGroup || !currentUser) {
             console.error("Cannot invite: group or current user data missing.");
             alert("Error: Missing group data.");
+            return;
+        }
+
+        // Check if user is authorized to invite
+        if (!currentUser.group_leader) {
+            console.error("Only group leaders can invite new members.");
+            alert("Error: Only group leaders can invite new members.");
             return;
         }
 
@@ -345,11 +364,27 @@ export default function Dashboard() {
         }
 
         try {
-            // Check if there's already a pending request for this user to this group
+            // Check if there's already a pending invite for this user
+            const groupDocRef = doc(db, "groups", userGroup.id);
+            const groupDoc = await getDoc(groupDocRef);
+            const groupData = groupDoc.data();
+
+            // Check if pendingUsers array exists and if the user is already invited
+            if (
+                groupData?.pendingUsers &&
+                groupData?.pendingUsers.includes(userIdToInvite)
+            ) {
+                console.warn("This user already has a pending invitation.");
+                alert(
+                    "This user already has a pending invitation to your group."
+                );
+                return;
+            }
+
+            // Check if there's already a pending request in the requests collection
             const requestsCollection = collection(db, "requests");
             const existingRequestsQuery = query(
                 requestsCollection,
-                where("senderId", "==", currentUser.uid),
                 where("recipientGroupId", "==", userGroup.id),
                 where("recipientUserId", "==", userIdToInvite),
                 where("status", "==", "pending")
@@ -361,29 +396,53 @@ export default function Dashboard() {
 
             if (!existingRequestsSnapshot.empty) {
                 console.warn("A pending invite already exists for this user.");
-                alert("You've already sent an invitation to this user.");
+                alert("There's already a pending invitation for this user.");
                 return;
             }
 
-            // Create a new request document
-            const newRequest = await addDoc(collection(db, "requests"), {
-                GroupId: userGroup.id,
-                GroupName: userGroup.groupName,
-                GroupLeaderId: userGroup.creatorId,
+            // Create a batch to ensure both operations succeed or fail together
+            const batch = writeBatch(db);
+
+            // Update the group's pendingUsers array
+            batch.update(groupDocRef, {
+                pendingUsers: arrayUnion(userIdToInvite),
+            });
+
+            // Prepare the request document data
+            const requestData = {
+                recipientGroupId: userGroup.id,
+                recipientGroupName: userGroup.groupName,
+                recipientGroupLeaderId: userGroup.creatorId,
                 senderId: currentUser.uid,
                 senderName: currentUser.name,
                 recipientUserId: userIdToInvite,
                 status: "pending",
                 createdAt: serverTimestamp(),
-                fromGroup: true,
-            });
+                type: "group_invitation",
+            };
+
+            // Create a new request document reference
+            const newRequestRef = doc(collection(db, "requests"));
+            batch.set(newRequestRef, requestData);
+
+            // Commit the batch
+            await batch.commit();
 
             console.log(
-                `Invitation sent successfully with ID: ${newRequest.id}`
+                `Invitation sent successfully with ID: ${newRequestRef.id}`
             );
             alert("Invitation sent successfully!");
 
-            // Remove the invited user from the list of ungrouped users to avoid duplicate invites
+            // Update the local state to reflect the pending invitation
+            setUserGroup({
+                ...userGroup,
+                pendingUsers: [
+                    ...(userGroup.pendingUsers || []),
+                    userIdToInvite,
+                ],
+            });
+
+            // Remove the invited user from the displayed list of ungrouped users
             setUngroupedUsers(
                 ungroupedUsers.filter((user) => user.uid !== userIdToInvite)
             );
