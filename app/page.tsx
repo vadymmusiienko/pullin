@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
         
 export default function Home() {
     return (
@@ -26,13 +27,18 @@ export default function Home() {
                     </div>
 
                     {/* Right Decorative Area */}
-                    <div className="hidden md:block md:w-2/5 bg-gradient-to-br from-teal-400 to-blue-500 p-12">
+                    <div className="hidden md:block md:w-1/2 bg-gradient-to-br from-teal-400 to-blue-500 p-12">
                         <div className="h-full flex items-center justify-center">
-                            <div className="w-32 h-32 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-                                <div className="w-24 h-24 rounded-full bg-white bg-opacity-30 flex items-center justify-center">
-                                    <div className="w-16 h-16 rounded-full bg-white bg-opacity-40"></div>
-                                </div>
-                            </div>
+                            {/* 2. Replace the nested circle divs with the Image component */}
+                            <Image
+                                src="/logo.png" // <-- 3. IMPORTANT: Update this path to your logo file in the /public folder
+                                alt="PullIn Logo" // <-- 4. Add descriptive alt text
+                                width={1000} // <-- 5. Set desired width (adjust as needed)
+                                height={1000} // <-- 6. Set desired height (adjust as needed)
+                                priority // Optional: Add if the logo is critical for LCP (Largest Contentful Paint)
+                                // You can add className for extra styling if necessary, e.g.,
+                                // className="rounded-full" // If you want the logo container itself to be round
+                            />
                         </div>
                     </div>
                 </div>
