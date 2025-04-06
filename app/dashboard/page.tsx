@@ -22,6 +22,7 @@ import GroupCard from "./components/GroupCard";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Loading from "../components/loading";
+import UserProfilePopup from "./components/UserProfilePopup";
 
 // Define type for color schemes to match the expected values
 type ColorScheme = "blue" | "green" | "purple" | "orange" | "pink";
@@ -579,7 +580,7 @@ export default function Dashboard() {
 
             const userToInviteRef = doc(db, "users", userIdToInvite);
             const userToInviteSnap = await getDoc(userToInviteRef);
-            
+
             if (!userToInviteSnap.exists()) {
                 throw new Error("User to invite not found");
             }
@@ -1164,6 +1165,9 @@ export default function Dashboard() {
                         >
                             + Create New Group
                         </Link>
+                        <UserProfilePopup
+                            userId={"eup37maH0Vg3d9jv9JhDjYNQe6g2"}
+                        />
                     </div>
                 )}
             </div>
