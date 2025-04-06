@@ -1,4 +1,5 @@
 import GroupCard from "./components/GroupCard";
+import Link from 'next/link';
 
 // TODO: Mock data for groups
 const mockGroups = [
@@ -135,6 +136,8 @@ const mockGroups = [
 
 // TODO: Dashboard component
 export default function Dashboard() {
+    const createGroupPath = "/create_group";
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-teal-400 to-blue-500 py-10 px-4 sm:px-6">
             <div className="max-w-7xl mx-auto">
@@ -197,17 +200,23 @@ export default function Dashboard() {
                             Try adjusting your search criteria or create a new
                             group.
                         </p>
-                        <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300">
+                        <Link
+                            href={createGroupPath}
+                            className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300"
+                        >
                             Create New Group
-                        </button>
+                        </Link>
                     </div>
                 )}
 
                 {/* Create new group button */}
                 <div className="mt-10 flex justify-center">
-                    <button className="px-8 py-4 bg-white text-blue-600 font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-300">
+                    <Link
+                        href={createGroupPath}
+                        className="px-8 py-4 bg-white text-blue-600 font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-300"
+                    >
                         + Create New Group
-                    </button>
+                    </Link>
                 </div>
             </div>
         </div>
