@@ -14,7 +14,6 @@ import {
   Timestamp,
   runTransaction,
   arrayUnion,
-  deleteDoc,
   arrayRemove,
   writeBatch,
 } from 'firebase/firestore';

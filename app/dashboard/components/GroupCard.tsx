@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { ChevronDown, ChevronUp, Calenda } from "lucide-react";
+import { ChevronDown, ChevronUp, Calendar } from "lucide-react";
 
 // Enhanced type for user cards with additional information
 type UserCard = {
