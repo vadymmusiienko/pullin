@@ -15,7 +15,6 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase/firebaseConfig"; // Adjust the import path as needed
 import GroupCard from "./components/GroupCard";
-import DisplayUsers from "./components/DisplayUsers"; // Ensure this path is correct
 import Link from "next/link";
 
 // Define type for color schemes to match the expected values
