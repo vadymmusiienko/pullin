@@ -361,7 +361,7 @@ export default function RequestsPage() {
         }
 
         transaction.update(requestRef, { status: "accepted", updatedAt: serverTimestamp() });
-        transaction.update(groupRef, { members: arrayUnion(user.uid), updatedAt: serverTimestamp(), pendingUsers: arrayRemove(request.userid) });
+        transaction.update(groupRef, { members: arrayUnion(user.uid), updatedAt: serverTimestamp(), pendingUsers: arrayRemove(user.uid) });
         transaction.update(userRef, {
           is_grouped: true,
           groupId: request.GroupId,
@@ -390,14 +390,44 @@ export default function RequestsPage() {
   };
 
   const handleDeclineRequest = async (request: RequestData) => {
-    if (processingRequestId) return;
+    if (processingRequestId || !user) return;
     setProcessingRequestId(request.id);
     setError(null);
+    
     const requestRef = doc(db, 'requests', request.id);
+    const batch = writeBatch(db);
+  
     try {
-      // Delete the request document instead of updating its status
-      await deleteDoc(requestRef);
-      console.log(`Request ${request.id} declined and deleted successfully.`);
+      // Update the request status to "declined" instead of deleting it
+      batch.update(requestRef, {
+        status: "declined",
+        updatedAt: serverTimestamp()
+      });
+      
+      // For user-to-group requests (user requesting to join a group)
+      if (!request.fromGroup && request.GroupId && request.userid) {
+        const groupRef = doc(db, 'groups', request.GroupId);
+        // Make sure we're using the correct user ID (the one from the request)
+        batch.update(groupRef, {
+          pendingUsers: arrayRemove(request.userid),
+          updatedAt: serverTimestamp()
+        });
+        console.log(`Removing user ${request.userid} from pending users in group ${request.GroupId}`);
+      }
+      
+      // For group-to-user requests (group inviting a user to join)
+      if (request.fromGroup && request.GroupId) {
+        const groupRef = doc(db, 'groups', request.GroupId);
+        // For group-to-user requests, the current user is the one being invited
+        batch.update(groupRef, {
+          pendingUsers: arrayRemove(user.uid),
+          updatedAt: serverTimestamp()
+        });
+        console.log(`Removing current user ${user.uid} from pending users in group ${request.GroupId}`);
+      }
+  
+      await batch.commit();
+      console.log(`Request ${request.id} declined successfully.`);
     } catch (err: unknown) {
       console.error("Error declining request:", err);
       setError(err instanceof Error ?
@@ -408,27 +438,52 @@ export default function RequestsPage() {
       setProcessingRequestId(null);
     }
   };
-
+  
   // Handle cancelling an outgoing request
   const handleCancelRequest = async (request: RequestData) => {
-    if (processingRequestId) return;
-    setProcessingRequestId(request.id);
-    setError(null);
-    const requestRef = doc(db, 'requests', request.id);
-    try {
-      // Delete the request document instead of updating its status
-      await deleteDoc(requestRef);
-      console.log(`Request ${request.id} cancelled and deleted successfully.`);
-    } catch (err: unknown) {
-      console.error("Error cancelling request:", err);
-      setError(err instanceof Error ?
-        `Failed to cancel request: ${err.message}` :
-        "An unexpected error occurred while cancelling the request."
-      );
-    } finally {
-      setProcessingRequestId(null);
+  if (processingRequestId || !user) return;
+  setProcessingRequestId(request.id);
+  setError(null);
+  
+  const requestRef = doc(db, 'requests', request.id);
+  const batch = writeBatch(db);
+
+  try {
+    // Delete the request document
+    batch.delete(requestRef);
+    
+    // For user-to-group requests (user requesting to join a group)
+    if (!request.fromGroup && request.GroupId) {
+      const groupRef = doc(db, 'groups', request.GroupId);
+      // Remove the requesting user (request.userid) from pendingUsers
+      batch.update(groupRef, {
+        pendingUsers: arrayRemove(user.uid), // The current user is the one who sent the request
+        updatedAt: serverTimestamp()
+      });
     }
-  };
+    
+    // For group-to-user requests (group inviting a user to join)
+    if (request.fromGroup && request.GroupId && request.userid) {
+      const groupRef = doc(db, 'groups', request.GroupId);
+      // Remove the invited user (request.userid) from pendingUsers
+      batch.update(groupRef, {
+        pendingUsers: arrayRemove(request.userid),
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    await batch.commit();
+    console.log(`Request ${request.id} cancelled and deleted successfully.`);
+  } catch (err: unknown) {
+    console.error("Error cancelling request:", err);
+    setError(err instanceof Error ?
+      `Failed to cancel request: ${err.message}` :
+      "An unexpected error occurred while cancelling the request."
+    );
+  } finally {
+    setProcessingRequestId(null);
+  }
+};
 
   // Render incoming request item based on type
   const renderIncomingRequestItem = (req: RequestData) => {
