@@ -297,12 +297,6 @@ export default function Dashboard() {
                             Try adjusting your search criteria or create a new
                             group.
                         </p>
-                        <Link
-                            href={createGroupPath}
-                            className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300"
-                        >
-                            Create New Group
-                        </Link>
                     </div>
                 )}
 
