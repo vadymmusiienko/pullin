@@ -82,7 +82,8 @@ const GroupCard: React.FC<GroupCardProps> = ({
                     {userCards.map((user) => (
                         <div
                             key={user.id}
-                            className="flex items-center p-3 bg-gray-50 rounded-xl hover:shadow-md transition-shadow duration-200"
+                            className="flex items-center p-3 bg-gray-50 rounded-xl hover:shadow-md transition-shadow duration-200 cursor-pointer"
+                            //TODO: onClick={handleProfileClick}
                         >
                             {/* Avatar */}
                             <div
@@ -140,7 +141,7 @@ const GroupCard: React.FC<GroupCardProps> = ({
                 {/* Request to join button */}
                 <div className="mt-6">
                     <button
-                        className={`w-full py-3 ${colors.button} text-white font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300`}
+                        className={`w-full py-3 ${colors.button} text-white font-medium rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300 cursor-pointer`}
                     >
                         Request to Join Group
                     </button>
