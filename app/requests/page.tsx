@@ -29,6 +29,7 @@ interface RequestData {
   createdAt: Timestamp;
   hasSeen?: boolean; // Flag to track if user has seen the request
   // User-to-group requests (fromGroup is false)
+  nameuser:string;
   userid?: string; // Sender user ID
   GroupId?: string; // Recipient group ID
   GroupName?: string; // Recipient group name
@@ -439,22 +440,22 @@ export default function RequestsPage() {
       return (
         <li key={req.id} className={`bg-white p-4 rounded-lg shadow-md border ${isNew ? 'border-blue-400' : 'border-gray-200'} flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0 sm:space-x-4`}>
           <div className="flex items-center space-x-3 flex-grow">
-            <div className="flex-grow">
-              <div className="flex items-center">
-                <p className="text-sm font-medium text-gray-900">
-                  User requested to join your group
-                </p>
-                {isNew && (
-                  <span className="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                    New
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-gray-500">
-                {req.createdAt?.toDate().toLocaleDateString()}
+          <div className="flex-grow">
+            <div className="flex items-center">
+              <p className="text-sm font-medium text-gray-900">
+                <span className='font-semibold'>{req.nameuser}</span> requested to join your group
               </p>
+              {isNew && (
+                <span className="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                  New
+                </span>
+              )}
             </div>
+            <p className="text-xs text-gray-500">
+              {req.createdAt?.toDate().toLocaleDateString()}
+            </p>
           </div>
+        </div>
           <div className="flex space-x-2 flex-shrink-0 self-end sm:self-center">
             <button
               onClick={() => handleAcceptRequest(req)}
@@ -573,7 +574,7 @@ export default function RequestsPage() {
             </div>
             <div className="flex-grow">
               <p className="text-sm font-medium text-gray-900 leading-snug">
-                Invitation sent to user
+                Invitation sent to <span className='font-semibold'>{req.nameuser}</span>
               </p>
               <p className="text-xs text-gray-500">
                 Sent: {req.createdAt?.toDate().toLocaleDateString()}
