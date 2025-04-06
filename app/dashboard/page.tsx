@@ -184,21 +184,14 @@ export default function Dashboard() {
                 return;
             }
 
-            // Check if user already has a pending request to this group
-            const requestsCollection = collection(db, "requests");
-            const existingRequestsQuery = query(
-                requestsCollection,
-                where("senderUserId", "==", currentUser.uid),
-                where("recipientGroupId", "==", groupId),
-                where("status", "==", "pending")
-            );
-
-            const existingRequestsSnapshot = await getDocs(
-                existingRequestsQuery
-            );
-
-            if (!existingRequestsSnapshot.empty) {
-                console.warn("A pending request already exists");
+            // Check if user already has a pending request to this group using the user's array
+            if (
+                currentUser.pendingRequests &&
+                currentUser.pendingRequests.includes(groupId)
+            ) {
+                console.warn(
+                    "A pending request potentially exists (checked via user.pendingRequests array)"
+                );
                 alert("You already have a pending request to join this group");
                 return;
             }
@@ -208,8 +201,7 @@ export default function Dashboard() {
 
             // Prepare the request document data
             const requestData = {
-                senderUserId: currentUser.uid,
-                senderName: currentUser.name,
+                userid: currentUser.uid,
                 GroupId: groupId,
                 GroupName: groupData.groupName,
                 GroupLeaderId: groupData.creatorId,
@@ -218,49 +210,33 @@ export default function Dashboard() {
                 fromGroup: false,
             };
 
-            // Create a new request document
+            // Create a new request document in the 'requests' collection
             const newRequestRef = doc(collection(db, "requests"));
             batch.set(newRequestRef, requestData);
 
-            // Update the group's pendingRequests array if it exists
-            if (!groupData.pendingRequests) {
-                batch.update(groupDocRef, {
-                    pendingRequests: [currentUser.uid],
-                });
-            } else {
-                batch.update(groupDocRef, {
-                    pendingRequests: arrayUnion(currentUser.uid),
-                });
-            }
-
-            // Update the user's pendingRequests array with the groupId they requested to join
+            // Update the user's pendingRequests array in the 'users' collection
             const userDocRef = doc(db, "users", currentUser.uid);
-            if (!currentUser.pendingRequests) {
-                batch.update(userDocRef, {
-                    pendingRequests: [groupId],
-                });
-            } else {
-                batch.update(userDocRef, {
-                    pendingRequests: arrayUnion(groupId),
-                });
-            }
+            batch.update(userDocRef, {
+                pendingRequests: arrayUnion(groupId),
+            });
 
-            // Commit all operations
+            // Commit all batched operations
             await batch.commit();
 
-            console.log(`Request to join group ${groupId} sent successfully`);
             alert("Your request to join the group has been sent!");
 
-            // Update current user state to include the new pending request
+            // Update *local* current user state to include the new pending request
+            // for immediate UI feedback.
             setCurrentUser({
                 ...currentUser,
+                // Ensure pendingRequests array exists before spreading/adding
                 pendingRequests: [
                     ...(currentUser.pendingRequests || []),
                     groupId,
                 ],
             });
 
-            // Update the UI to reflect changes
+            // Update the UI to reflect changes (e.g., refresh list of groups)
             await fetchRecommendedGroups();
         } catch (error) {
             console.error("Error sending join request:", error);
@@ -541,15 +517,13 @@ export default function Dashboard() {
 
             // Prepare the request document data
             const requestData = {
-                recipientGroupId: userGroup.id,
-                recipientGroupName: userGroup.groupName,
-                recipientGroupLeaderId: userGroup.creatorId,
-                senderId: currentUser.uid,
-                senderName: currentUser.name,
-                recipientUserId: userIdToInvite,
+                GroupId: userGroup.id,
+                GroupName: userGroup.groupName,
+                GroupLeaderId: userGroup.creatorId,
+                userid: userIdToInvite,
                 status: "pending",
                 createdAt: serverTimestamp(),
-                type: "group_invitation",
+                fromGroup: true,
             };
 
             // Create a new request document reference
