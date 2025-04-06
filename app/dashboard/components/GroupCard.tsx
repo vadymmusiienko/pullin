@@ -62,12 +62,6 @@ const GroupCard: React.FC<GroupCardProps> = ({
 
     const colors = colorSchemes[colorScheme];
 
-    const handleRequestClick = () => {
-        if (onRequestJoin) {
-            onRequestJoin(groupId);
-        }
-    };
-
     return (
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden w-full">
             <div className={`${colors.header} p-4`}>

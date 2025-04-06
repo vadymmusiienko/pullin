@@ -210,14 +210,12 @@ export default function Dashboard() {
             const requestData = {
                 senderUserId: currentUser.uid,
                 senderName: currentUser.name,
-                senderEmail: currentUser.email,
-                senderYear: currentUser.graduationYear,
-                recipientGroupId: groupId,
-                recipientGroupName: groupData.groupName,
-                recipientGroupLeaderId: groupData.creatorId,
+                GroupId: groupId,
+                GroupName: groupData.groupName,
+                GroupLeaderId: groupData.creatorId,
                 status: "pending",
                 createdAt: serverTimestamp(),
-                type: "join_request",
+                fromGroup: false,
             };
 
             // Create a new request document
@@ -1084,7 +1082,9 @@ export default function Dashboard() {
                                         colorScheme={group.colorScheme}
                                         groupId={group.id} // Pass the group ID
                                         onRequestJoin={handleRequestToJoinGroup} // Pass the handler
-                                        isPending={isGroupRequestPending(group.id)}
+                                        isPending={isGroupRequestPending(
+                                            group.id
+                                        )}
                                     />
                                 </div>
                             ))}
