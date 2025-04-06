@@ -30,9 +30,14 @@ type ColorScheme = "blue" | "green" | "purple" | "orange" | "pink";
 export interface GroupMemberCard {
     id: string;
     name: string;
-    year: string;
-    registrationTime: string;
-    pfpUrl?: string; // Add profile picture URL
+    year?: string;
+    registrationTime?: string;
+    pfp?: string;
+    bio?: string;
+    interests?: string[];
+    contactInfo?: string;
+    joinedDate?: string;
+    instagramHandle?: string; // Optional Instagram handle
 }
 
 // Interface for full Group Data
@@ -54,19 +59,20 @@ export interface GroupData {
 export interface UserData {
     name: string;
     email: string;
-    bio: string;
+    bio?: string;
     graduationYear: number;
     group_leader: boolean;
-    interests: string[];
+    interests?: string[];
     is_grouped: boolean;
     registrationTime?: string; // Make optional if not always present
     school: string;
     uid: string;
     pfpUrl?: string; // Optional profile picture
-    createdAt: Timestamp;
-    updatedAt: Timestamp;
+    createdAt?: Timestamp;
+    updatedAt?: Timestamp;
     groupId?: string; // Add groupId if user document stores it
     pendingRequests?: string[]; // Array of group IDs the user has requested to join
+    instagramHandle?: string; // Optional Instagram handle
 }
 
 export default function Dashboard() {
@@ -276,35 +282,48 @@ export default function Dashboard() {
             const groupsDataPromises = groupsSnapshot.docs.map(
                 async (groupDoc) => {
                     const groupData = groupDoc.data();
-                    // 1. Fetch the full UserData for members (rename for clarity)
+
+                    // 1. Fetch the full UserData for members
                     const memberDetails: UserData[] =
                         await fetchGroupMemberDetails(groupData.members || []);
 
-                    // 2. Map UserData[] to GroupMemberCard[]
+                    // 2. Map UserData[] to GroupMemberCard[] with all the expanded fields
                     const groupMemberCards: GroupMemberCard[] =
                         memberDetails.map((member) => ({
-                            id: member.uid, // Map uid to id
+                            id: member.uid,
                             name: member.name,
-                            year: `Class of ${member.graduationYear}`, // Map graduationYear to year string
-                            registrationTime: member.registrationTime || "", // Handle undefined
-                            pfpUrl: member.pfpUrl,
+                            year: `Class of ${member.graduationYear}`,
+                            registrationTime: member.registrationTime || "",
+                            pfpUrl: member.pfpUrl || "",
+                            bio: member.bio || "",
+                            interests: member.interests || [],
+                            contactInfo: member.email,
+                            joinedDate: member.createdAt
+                                ? member.createdAt
+                                      .toDate()
+                                      .toLocaleDateString("en-US", {
+                                          year: "numeric",
+                                          month: "short",
+                                          day: "numeric",
+                                      })
+                                : "",
+                            instagramHandle: member.instagramHandle || "",
                         }));
 
                     // 3. Construct the final object conforming to GroupData
                     const resultData: GroupData = {
-                        // Add explicit type annotation here too
                         id: groupDoc.id,
                         capacity: groupData.capacity,
                         currentOccupancy: (groupData.members || []).length,
                         groupName: groupData.groupName,
                         colorScheme: getColorScheme(groupDoc.id),
-                        userCards: groupMemberCards, // Assign the mapped GroupMemberCard[] array
+                        userCards: groupMemberCards,
                         creatorId: groupData.creatorId,
-                        members: groupData.members || [], // Keep original member IDs
+                        members: groupData.members || [],
                         description: groupData.description,
                         pendingUsers: groupData.pendingUsers || [],
-                        // Include pendingRequests if available
                     };
+
                     return resultData;
                 }
             );
